@@ -1,0 +1,15 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="crabapple-bg" x1="64" y1="64" x2="448" y2="448" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#2563EB"/>
+      <stop offset="1" stop-color="#06B6D4"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#crabapple-bg)"/>
+  <rect x="250" y="140" width="12" height="46" rx="6" fill="#FFFFFF"/>
+  <circle cx="256" cy="128" r="15" fill="#FFFFFF"/>
+  <rect x="152" y="172" width="208" height="160" rx="46" fill="#FFFFFF"/>
+  <circle cx="216" cy="242" r="20" fill="url(#crabapple-bg)"/>
+  <circle cx="296" cy="242" r="20" fill="url(#crabapple-bg)"/>
+  <rect x="222" y="284" width="68" height="14" rx="7" fill="url(#crabapple-bg)"/>
+</svg>

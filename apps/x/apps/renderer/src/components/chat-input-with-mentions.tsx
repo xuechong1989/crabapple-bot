@@ -1,0 +1,1585 @@
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import {
+  ArrowUp,
+  AudioLines,
+  ChevronDown,
+  FileArchive,
+  FileCode2,
+  FileIcon,
+  FileSpreadsheet,
+  FileText,
+  FileVideo,
+  FolderCheck,
+  FolderClock,
+  FolderCog,
+  FolderOpen,
+  Globe,
+  ImagePlus,
+  ListTodo,
+  LoaderIcon,
+  MessageCircle,
+  Lock,
+  Mic,
+  MoreHorizontal,
+  Phone,
+  PhoneOff,
+  Plus,
+  Presentation,
+  ShieldCheck,
+  Square,
+  Terminal,
+  Video,
+  X,
+} from 'lucide-react'
+
+import { Button } from '@/components/ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import { ModelSelector, type ModelRef, type ModelSelection } from '@/components/model-selector'
+import { useModels } from '@/hooks/use-models'
+import {
+  type AttachmentIconKind,
+  getAttachmentDisplayName,
+  getAttachmentIconKind,
+  getAttachmentToneClass,
+  getAttachmentTypeLabel,
+} from '@/lib/attachment-presentation'
+import { getExtension, getFileDisplayName, getMimeFromExtension, isImageMime } from '@/lib/file-utils'
+import { cn } from '@/lib/utils'
+import {
+  type FileMention,
+  type PromptInputMessage,
+  PromptInputProvider,
+  PromptInputTextarea,
+  usePromptInputController,
+} from '@/components/ai-elements/prompt-input'
+import { toast } from 'sonner'
+
+export type StagedAttachment = {
+  id: string
+  path: string
+  filename: string
+  mimeType: string
+  isImage: boolean
+  size: number
+  thumbnailUrl?: string
+}
+
+const MAX_ATTACHMENT_SIZE = 10 * 1024 * 1024 // 10MB
+const MAX_VISIBLE_RECENT_WORK_DIRS = 3
+const MAX_STORED_RECENT_WORK_DIRS = 8
+const CHAT_INPUT_TOOLTIP_DELAY_MS = 1000
+// Stored in the workspace (~/.crabapple/config) so it travels with the workspace and
+// stays consistent with the other config/*.json files (e.g. coding-agents.json).
+const RECENT_WORK_DIRS_CONFIG_PATH = 'config/recent-work-dirs.json'
+const RECENT_WORK_DIRS_CHANGED_EVENT = 'crabapple-chat-recent-work-dirs-changed'
+
+
+type RecentWorkDir = {
+  path: string
+  lastUsedAt: number
+}
+
+// The picker itself lives in ModelSelector; these aliases keep the composer's
+// public prop surface stable for existing consumers (chat-sidebar, App).
+// SelectedModel is the frozen/locked ref shape; ModelSelection is THE
+// canonical value (ref + effort) the composer holds and reports.
+export type SelectedModel = ModelRef
+export type { ModelSelection, ReasoningEffortLevel } from '@/components/model-selector'
+
+export type PermissionMode = 'manual' | 'auto'
+
+function getAttachmentIcon(kind: AttachmentIconKind) {
+  switch (kind) {
+    case 'audio':
+      return AudioLines
+    case 'video':
+      return FileVideo
+    case 'spreadsheet':
+      return FileSpreadsheet
+    case 'archive':
+      return FileArchive
+    case 'code':
+      return FileCode2
+    case 'text':
+      return FileText
+    default:
+      return FileIcon
+  }
+}
+
+function normalizeRecentWorkDir(value: unknown): RecentWorkDir | null {
+  if (typeof value === 'string') {
+    const path = value.trim()
+    return path ? { path, lastUsedAt: 0 } : null
+  }
+  if (!value || typeof value !== 'object') return null
+  const entry = value as Record<string, unknown>
+  const path = typeof entry.path === 'string' ? entry.path.trim() : ''
+  const lastUsedAt = typeof entry.lastUsedAt === 'number' && Number.isFinite(entry.lastUsedAt)
+    ? entry.lastUsedAt
+    : 0
+  return path ? { path, lastUsedAt } : null
+}
+
+async function readRecentWorkDirs(): Promise<RecentWorkDir[]> {
+  try {
+    const result = await window.ipc.invoke('workspace:readFile', { path: RECENT_WORK_DIRS_CONFIG_PATH })
+    const parsed = JSON.parse(result.data)
+    if (!Array.isArray(parsed)) return []
+    const seen = new Set<string>()
+    const dirs: RecentWorkDir[] = []
+    for (const value of parsed) {
+      const entry = normalizeRecentWorkDir(value)
+      if (!entry || seen.has(entry.path)) continue
+      seen.add(entry.path)
+      dirs.push(entry)
+      if (dirs.length >= MAX_STORED_RECENT_WORK_DIRS) break
+    }
+    return dirs
+  } catch {
+    // File missing or invalid — no recents yet.
+    return []
+  }
+}
+
+async function writeRecentWorkDirs(dirs: RecentWorkDir[]) {
+  try {
+    await window.ipc.invoke('workspace:writeFile', {
+      path: RECENT_WORK_DIRS_CONFIG_PATH,
+      data: JSON.stringify(dirs.slice(0, MAX_STORED_RECENT_WORK_DIRS), null, 2),
+    })
+  } catch (err) {
+    console.error('Failed to persist recent work directories', err)
+  }
+  // Notify other mounted chat inputs in this window to re-read.
+  window.dispatchEvent(new CustomEvent(RECENT_WORK_DIRS_CHANGED_EVENT))
+}
+
+function formatRecentWorkDirTime(lastUsedAt: number) {
+  if (!lastUsedAt) return ''
+  const now = Date.now()
+  const diffMs = Math.max(0, now - lastUsedAt)
+  const minute = 60 * 1000
+  const hour = 60 * minute
+  const day = 24 * hour
+  if (diffMs < minute) return 'now'
+  if (diffMs < hour) return `${Math.max(1, Math.floor(diffMs / minute))}m ago`
+  if (diffMs < day) return `${Math.floor(diffMs / hour)}h ago`
+
+  const used = new Date(lastUsedAt)
+  const yesterday = new Date(now - day)
+  if (
+    used.getFullYear() === yesterday.getFullYear() &&
+    used.getMonth() === yesterday.getMonth() &&
+    used.getDate() === yesterday.getDate()
+  ) {
+    return 'Yesterday'
+  }
+  if (diffMs < 7 * day) {
+    return used.toLocaleDateString(undefined, { weekday: 'short' })
+  }
+  return used.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+}
+
+function compactWorkDirPath(path: string) {
+  return path.replace(/^\/Users\/[^/]+/, '~')
+}
+
+// Call presets: front doors into the same call engine, differing only in
+// starting devices. 'share' is the call button's main click — the "work
+// together" default (screen shared, camera off, floating pill). The chevron
+// menu holds the deviations.
+export type CallPreset = 'voice' | 'video' | 'share' | 'practice'
+
+const CALL_PRESET_MENU: Array<{ preset: CallPreset; label: string; description: string; Icon: typeof Phone }> = [
+  // 'voice' was dropped from the menu (the quick-ask bar with its voice
+  // toggle covers the talk-without-devices case); the preset itself stays
+  // valid for programmatic callers.
+  { preset: 'video', label: 'Video call', description: 'Camera on, face to face — it sees your expressions', Icon: Video },
+  { preset: 'practice', label: 'Practice session', description: 'Rehearse a pitch or interview with live coaching', Icon: Presentation },
+]
+
+interface ChatInputInnerProps {
+  onSubmit: (message: PromptInputMessage, mentions?: FileMention[], attachments?: StagedAttachment[], searchEnabled?: boolean, codeMode?: 'claude' | 'codex', permissionMode?: PermissionMode) => void
+  onStop?: () => void
+  isProcessing: boolean
+  isStopping?: boolean
+  isActive: boolean
+  presetMessage?: string
+  onPresetMessageConsumed?: () => void
+  runId?: string | null
+  initialDraft?: string
+  onDraftChange?: (text: string) => void
+  isRecording?: boolean
+  recordingText?: string
+  recordingState?: 'connecting' | 'listening' | 'stopping'
+  /** Live mic amplitude history (RMS per frame) driving the recording waveform. */
+  audioLevelsRef?: React.MutableRefObject<number[]>
+  onStartRecording?: () => void
+  onSubmitRecording?: () => void | Promise<void>
+  onCancelRecording?: () => void
+  voiceAvailable?: boolean
+  /** A call is live (hands-free voice loop + spoken responses). */
+  inCall?: boolean
+  /** Start a call with the given preset's device defaults. */
+  onStartCall?: (preset: CallPreset) => void
+  onEndCall?: () => void
+  /** Calls need both voice input (STT) and voice output (TTS) configured. */
+  callAvailable?: boolean
+  /**
+   * Fired whenever this chat's selection (model + effort, one value)
+   * changes: the settings seed on mount, a picker interaction, or a
+   * locked-chat effort pick. Never null after the seed resolves.
+   */
+  onSelectionChange?: (selection: ModelSelection | null) => void
+  /** The chat's prior selection (per-tab continuity within the app run); seeds the state before anything else. */
+  initialSelection?: ModelSelection | null
+  /**
+   * A reopened session's last-turn selection: undefined = session still
+   * loading (hold the settings seed), a value = adopt it, null = session
+   * has no turns (fall through to the settings seed). Ignored once the
+   * selection is set.
+   */
+  restoredSelection?: ModelSelection | null
+  /** Work directory for this chat (per-chat). Null when none is set. */
+  workDir?: string | null
+  /** Fired when the user sets/changes/clears the work directory for this chat. */
+  onWorkDirChange?: (value: string | null) => void
+  /**
+   * Set when this chat is bound to a Code-section session: the work directory
+   * and coding agent come from the session and are FROZEN — the backend pins
+   * them server-side regardless, so the composer must not pretend otherwise.
+   */
+  codeSessionLock?: { cwd: string; agent: 'claude' | 'codex' } | null
+  contextChip?: { label: string; icon?: 'todo' | 'reply'; quote?: string; onDismiss: () => void }
+  placeholder?: string
+  focusSignal?: number
+}
+
+function ChatInputInner({
+  onSubmit,
+  onStop,
+  isProcessing,
+  isStopping,
+  isActive,
+  presetMessage,
+  onPresetMessageConsumed,
+  runId,
+  initialDraft,
+  onDraftChange,
+  isRecording,
+  recordingText,
+  recordingState,
+  audioLevelsRef,
+  onStartRecording,
+  onSubmitRecording,
+  onCancelRecording,
+  voiceAvailable,
+  inCall,
+  onStartCall,
+  onEndCall,
+  callAvailable,
+  onSelectionChange,
+  initialSelection = null,
+  restoredSelection,
+  workDir = null,
+  onWorkDirChange,
+  codeSessionLock = null,
+  contextChip,
+  placeholder,
+  focusSignal,
+}: ChatInputInnerProps) {
+  const controller = usePromptInputController()
+  const message = controller.textInput.value
+  const [attachments, setAttachments] = useState<StagedAttachment[]>([])
+  const [focusNonce, setFocusNonce] = useState(0)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const canSubmit = (Boolean(message.trim()) || attachments.length > 0) && !isProcessing
+
+  // Shared model-catalog store (one fetch app-wide); sign-in state also
+  // gates search availability below.
+  const { isCrabappleConnected, defaultModel, defaultEffort, refresh: refreshModels } = useModels()
+  // THE chat's selection (model + effort, one value). Initialized from the
+  // tab's prior selection when the caller has one, else seeded once from the
+  // settings pair when the catalog loads; thereafter it changes only on
+  // picker interactions. null only before the seed resolves.
+  const [selection, setSelection] = useState<ModelSelection | null>(initialSelection)
+  const [lockedModel, setLockedModel] = useState<SelectedModel | null>(null)
+  const [searchEnabled, setSearchEnabled] = useState(false)
+  const [searchAvailable, setSearchAvailable] = useState(false)
+  const [codingAgent, setCodingAgent] = useState<'claude' | 'codex'>('claude')
+  const [codeModeEnabled, setCodeModeEnabled] = useState(false)
+  const [codeModeFeatureEnabled, setCodeModeFeatureEnabled] = useState(false)
+  const [permissionMode, setPermissionMode] = useState<PermissionMode>('auto')
+  const [recentWorkDirs, setRecentWorkDirs] = useState<RecentWorkDir[]>([])
+
+  // Responsive toolbar: measure real overflow and progressively collapse items
+  // right→left until everything fits. Stages:
+  //   1 code→icon · 2 perm→icon · 3 search label hidden · 4 workDir→icon
+  //   5 code→menu · 6 perm→menu · 7 search→menu · 8 workDir→menu
+  // Once items move into the "⋯" overflow menu (≥5) no icon is ever hidden.
+  // overflow-hidden on the left group is the hard guarantee against any overlap.
+  const toolbarRef = useRef<HTMLDivElement>(null)
+  const leftGroupRef = useRef<HTMLDivElement>(null)
+  const lastWidthRef = useRef(0)
+  const [collapseLevel, setCollapseLevel] = useState(0)
+
+  // Re-evaluate from scratch (level 0) whenever the available width changes…
+  useEffect(() => {
+    const outer = toolbarRef.current
+    if (!outer) return
+    const ro = new ResizeObserver(() => {
+      const w = outer.clientWidth
+      if (w !== lastWidthRef.current) {
+        lastWidthRef.current = w
+        setCollapseLevel(0)
+      }
+    })
+    ro.observe(outer)
+    return () => ro.disconnect()
+  }, [])
+
+  // …or when the *set* of items changes (an item appears/disappears, or the model
+  // name width changes). Deliberately excludes the in-place toggles (searchEnabled,
+  // permissionMode, codeModeEnabled, codingAgent): those fire from the overflow menu
+  // for items already inside it, so resetting here would unmount the open menu. The
+  // no-dep effect below still re-collapses if any toggle happens to widen the row.
+  useLayoutEffect(() => {
+    setCollapseLevel(0)
+  }, [workDir, searchAvailable, codeModeFeatureEnabled, lockedModel, selection])
+
+  // After each render, if the left group still overflows, collapse one more step.
+  // Runs before paint, so the intermediate (overflowing) state is never visible.
+  useLayoutEffect(() => {
+    const el = leftGroupRef.current
+    if (!el) return
+    if (el.scrollWidth > el.clientWidth + 1 && collapseLevel < 8) {
+      setCollapseLevel((l) => Math.min(8, l + 1))
+    }
+  })
+
+  // Sessions runtime: model and permission mode are per-message turn config,
+  // so nothing is frozen for an existing chat — the picker stays live.
+  useEffect(() => {
+    if (!runId) {
+      setLockedModel(null)
+      setPermissionMode('auto')
+      return
+    }
+    setLockedModel(null)
+  }, [runId])
+
+  useEffect(() => {
+    const syncRecentWorkDirs = () => { void readRecentWorkDirs().then(setRecentWorkDirs) }
+    syncRecentWorkDirs()
+    window.addEventListener(RECENT_WORK_DIRS_CHANGED_EVENT, syncRecentWorkDirs)
+    return () => {
+      window.removeEventListener(RECENT_WORK_DIRS_CHANGED_EVENT, syncRecentWorkDirs)
+    }
+  }, [])
+
+  // The store loads on mount and re-fetches on config/sign-in events by
+  // itself; re-fetch on tab activation too, preserving the old per-mount
+  // reload that picked up external edits to config/models.json.
+  const didLoadModelsRef = useRef(false)
+  useEffect(() => {
+    if (!didLoadModelsRef.current) {
+      didLoadModelsRef.current = true
+      return
+    }
+    refreshModels()
+  }, [isActive, refreshModels])
+
+  // Load the global code-mode feature flag (from settings) and stay in sync.
+  useEffect(() => {
+    const load = () => {
+      window.ipc.invoke('codeMode:getConfig', null)
+        .then((r) => setCodeModeFeatureEnabled(r.enabled))
+        .catch(() => setCodeModeFeatureEnabled(false))
+    }
+    load()
+    window.addEventListener('code-mode-config-changed', load)
+    return () => window.removeEventListener('code-mode-config-changed', load)
+  }, [])
+
+  // If the feature is turned off in settings, also turn off any per-conversation chip.
+  useEffect(() => {
+    if (!codeModeFeatureEnabled && codeModeEnabled) {
+      setCodeModeEnabled(false)
+    }
+  }, [codeModeFeatureEnabled, codeModeEnabled])
+
+
+  // Cross-platform basename — handles both / and \ separators.
+  const basename = useCallback((p: string): string => {
+    const trimmed = p.replace(/[\\/]+$/, '')
+    const idx = Math.max(trimmed.lastIndexOf('/'), trimmed.lastIndexOf('\\'))
+    return idx >= 0 ? trimmed.slice(idx + 1) : trimmed
+  }, [])
+
+  const rememberWorkDir = useCallback(async (dir: string) => {
+    const trimmed = dir.trim()
+    if (!trimmed) return
+    const next = [
+      { path: trimmed, lastUsedAt: Date.now() },
+      ...(await readRecentWorkDirs()).filter((item) => item.path !== trimmed),
+    ].slice(0, MAX_STORED_RECENT_WORK_DIRS)
+    setRecentWorkDirs(next)
+    await writeRecentWorkDirs(next)
+  }, [])
+
+  // Load coding-agent preference for a given workdir.
+  // Storage: config/coding-agents.json — { [workDirPath]: 'claude' | 'codex' }
+  const loadCodingAgentFor = useCallback(async (dir: string | null): Promise<'claude' | 'codex'> => {
+    if (!dir) return 'claude'
+    try {
+      const result = await window.ipc.invoke('workspace:readFile', { path: 'config/coding-agents.json' })
+      const parsed = JSON.parse(result.data) as Record<string, unknown>
+      const value = parsed?.[dir]
+      if (value === 'codex' || value === 'claude') return value
+    } catch {
+      /* file missing or invalid — fall through to default */
+    }
+    return 'claude'
+  }, [])
+
+  const persistCodingAgent = useCallback(async (dir: string, agent: 'claude' | 'codex') => {
+    const existing: Record<string, 'claude' | 'codex'> = {}
+    try {
+      const result = await window.ipc.invoke('workspace:readFile', { path: 'config/coding-agents.json' })
+      const parsed = JSON.parse(result.data) as Record<string, unknown>
+      for (const [k, v] of Object.entries(parsed ?? {})) {
+        if (v === 'claude' || v === 'codex') existing[k] = v
+      }
+    } catch { /* start fresh */ }
+    existing[dir] = agent
+    await window.ipc.invoke('workspace:writeFile', {
+      path: 'config/coding-agents.json',
+      data: JSON.stringify(existing, null, 2),
+    })
+  }, [])
+
+  // A chat bound to a Code-section session has its work directory and coding
+  // agent frozen to the session's — the backend pins them server-side, so the
+  // composer reflects that instead of offering controls that wouldn't apply.
+  const isCodeLocked = Boolean(codeSessionLock)
+  const effectiveWorkDir = codeSessionLock?.cwd ?? workDir
+
+  // Work directory is owned per-chat by the parent (App). This component only
+  // drives the picker dialog and reports changes up via onWorkDirChange. Whenever
+  // the work directory changes, load its persisted coding-agent preference.
+  useEffect(() => {
+    if (codeSessionLock) {
+      setCodingAgent(codeSessionLock.agent)
+      return
+    }
+    let cancelled = false
+    loadCodingAgentFor(workDir).then((agent) => {
+      if (!cancelled) setCodingAgent(agent)
+    })
+    return () => { cancelled = true }
+  }, [workDir, loadCodingAgentFor, codeSessionLock])
+
+  useEffect(() => {
+    if (isActive && workDir && !isCodeLocked) void rememberWorkDir(workDir)
+  }, [isActive, workDir, rememberWorkDir, isCodeLocked])
+
+  const handleSetWorkDir = useCallback(async () => {
+    if (isCodeLocked) return
+    try {
+      let defaultPath: string | undefined = workDir ?? undefined
+      try {
+        const { root } = await window.ipc.invoke('workspace:getRoot', null)
+        const workspaceRel = 'knowledge/Workspace'
+        const exists = await window.ipc.invoke('workspace:exists', { path: workspaceRel })
+        if (!exists.exists) {
+          await window.ipc.invoke('workspace:mkdir', { path: workspaceRel, recursive: true })
+        }
+        defaultPath = `${root.replace(/\/$/, '')}/${workspaceRel}`
+      } catch (err) {
+        console.error('Failed to resolve Workspace path; falling back to current workDir', err)
+      }
+      const { path: chosen } = await window.ipc.invoke('dialog:openDirectory', {
+        title: 'Choose work directory',
+        defaultPath,
+      })
+      if (!chosen) return
+      onWorkDirChange?.(chosen)
+      await rememberWorkDir(chosen)
+      setCodingAgent(await loadCodingAgentFor(chosen))
+      toast.success(`Work directory set: ${chosen}`)
+    } catch (err) {
+      console.error('Failed to set work directory', err)
+      toast.error('Failed to set work directory')
+    }
+  }, [workDir, onWorkDirChange, rememberWorkDir, loadCodingAgentFor, isCodeLocked])
+
+  const handleSelectRecentWorkDir = useCallback(async (dir: string) => {
+    onWorkDirChange?.(dir)
+    await rememberWorkDir(dir)
+    setCodingAgent(await loadCodingAgentFor(dir))
+    toast.success(`Work directory set: ${dir}`)
+  }, [onWorkDirChange, rememberWorkDir, loadCodingAgentFor])
+
+  const handleClearWorkDir = useCallback(() => {
+    if (isCodeLocked) return
+    onWorkDirChange?.(null)
+    setCodingAgent('claude')
+    toast.success('Work directory cleared')
+  }, [onWorkDirChange, isCodeLocked])
+
+  const handleToggleCodingAgent = useCallback(async () => {
+    if (isCodeLocked) return
+    const next: 'claude' | 'codex' = codingAgent === 'claude' ? 'codex' : 'claude'
+    setCodingAgent(next)
+    // Persist only when scoped to a workdir; without one there's nothing to key on.
+    if (!workDir) return
+    try {
+      await persistCodingAgent(workDir, next)
+    } catch (err) {
+      console.error('Failed to save coding agent', err)
+      toast.error('Failed to save coding agent')
+      // revert on failure
+      setCodingAgent(codingAgent)
+    }
+  }, [workDir, codingAgent, persistCodingAgent, isCodeLocked])
+
+  // Check search tool availability (exa or signed-in via gateway)
+  useEffect(() => {
+    const checkSearch = async () => {
+      if (isCrabappleConnected) {
+        setSearchAvailable(true)
+        return
+      }
+      let available = false
+      try {
+        const raw = await window.ipc.invoke('workspace:readFile', { path: 'config/exa-search.json' })
+        const config = JSON.parse(raw.data)
+        if (config.apiKey) available = true
+      } catch { /* not configured */ }
+      setSearchAvailable(available)
+    }
+    checkSearch()
+  }, [isActive, isCrabappleConnected])
+
+  // Selecting here is PER-CHAT: it affects the next run created from this
+  // tab and nothing else. The config's assistantModel is the durable
+  // default — new tabs and background work always start from it, and only
+  // the settings Assistant picker (or a provider connect's initial
+  // selection) writes it. On a locked chat the model is frozen but the
+  // picker still commits effort-only selections carrying the locked ref.
+  const handleSelectionChange = useCallback((next: ModelSelection | null) => {
+    // null = the sentinel row, which the composer never renders (no
+    // defaultOption) — guard for the widened onChange contract only.
+    if (!next) return
+    if (lockedModel && next.model !== lockedModel.model) return
+    setSelection(next)
+    onSelectionChange?.(next)
+  }, [lockedModel, onSelectionChange])
+
+  // Seed order for an unset selection: an existing session restores its
+  // last turn's selection (waiting for the session to load rather than
+  // flashing the settings pair); drafts and no-turn sessions adopt the
+  // settings pair once the catalog delivers it. Either way the result is
+  // ONE explicit snapshot — the state never tracks later settings edits.
+  useEffect(() => {
+    if (selection !== null) return
+    if (runId) {
+      if (restoredSelection === undefined) return
+      if (restoredSelection) {
+        setSelection(restoredSelection)
+        onSelectionChange?.(restoredSelection)
+        return
+      }
+    }
+    if (!defaultModel) return
+    const seeded: ModelSelection = { ...defaultModel, ...(defaultEffort ? { effort: defaultEffort } : {}) }
+    setSelection(seeded)
+    onSelectionChange?.(seeded)
+  }, [selection, runId, restoredSelection, defaultModel, defaultEffort, onSelectionChange])
+
+  // "New chat" reuses the tab (and this component instance) in place — the
+  // runId dropping back to null is the reset signal: clear the selection so
+  // the seed effect above restarts it from the CURRENT settings pair.
+  const prevRunIdRef = useRef(runId)
+  useEffect(() => {
+    const prev = prevRunIdRef.current
+    prevRunIdRef.current = runId
+    if (prev && !runId) {
+      setSelection(null)
+      onSelectionChange?.(null)
+    }
+  }, [runId, onSelectionChange])
+
+  // Restore the tab draft when this input mounts.
+  useEffect(() => {
+    if (initialDraft) {
+      controller.textInput.setInput(initialDraft)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  useEffect(() => {
+    onDraftChange?.(message)
+  }, [message, onDraftChange])
+
+  useEffect(() => {
+    if (presetMessage) {
+      controller.textInput.setInput(presetMessage)
+      onPresetMessageConsumed?.()
+    }
+  }, [presetMessage, controller.textInput, onPresetMessageConsumed])
+
+  const addFiles = useCallback(async (paths: string[]) => {
+    const newAttachments: StagedAttachment[] = []
+    for (const filePath of paths) {
+      try {
+        const result = await window.ipc.invoke('shell:readFileBase64', { path: filePath })
+        if (result.size > MAX_ATTACHMENT_SIZE) {
+          toast.error(`File too large: ${getFileDisplayName(filePath)} (max 10MB)`)
+          continue
+        }
+        const mime = result.mimeType || getMimeFromExtension(getExtension(filePath))
+        const image = isImageMime(mime)
+        newAttachments.push({
+          id: `att-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+          path: filePath,
+          filename: getFileDisplayName(filePath),
+          mimeType: mime,
+          isImage: image,
+          size: result.size,
+          thumbnailUrl: image ? `data:${mime};base64,${result.data}` : undefined,
+        })
+      } catch (err) {
+        console.error('Failed to read file:', filePath, err)
+        toast.error(`Failed to read: ${getFileDisplayName(filePath)}`)
+      }
+    }
+    if (newAttachments.length > 0) {
+      setAttachments((prev) => [...prev, ...newAttachments])
+      setFocusNonce((value) => value + 1)
+    }
+  }, [])
+
+  const removeAttachment = useCallback((id: string) => {
+    setAttachments((prev) => prev.filter((attachment) => attachment.id !== id))
+  }, [])
+
+  const handleSubmit = useCallback(() => {
+    if (!canSubmit) return
+    // codeMode is sticky per conversation — don't reset after send. A code
+    // session forces it (the backend pins the agent anyway).
+    const effectiveCodeMode = codeSessionLock ? codeSessionLock.agent : (codeModeEnabled ? codingAgent : undefined)
+    onSubmit({ text: message.trim(), files: [] }, controller.mentions.mentions, attachments, searchEnabled || undefined, effectiveCodeMode, permissionMode)
+    controller.textInput.clear()
+    controller.mentions.clearMentions()
+    setAttachments([])
+    // Web search toggle stays on for the rest of the chat session; the user
+    // turns it off explicitly. (Not persisted across app restarts.)
+  }, [attachments, canSubmit, controller, message, onSubmit, searchEnabled, codeModeEnabled, codingAgent, permissionMode, workDir, codeSessionLock])
+
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
+      handleSubmit()
+      return
+    }
+    if (e.key === 'Escape' && contextChip) {
+      e.preventDefault()
+      contextChip.onDismiss()
+    }
+  }, [handleSubmit, contextChip])
+
+  useEffect(() => {
+    if (!isActive) return
+    const onDragOver = (e: DragEvent) => {
+      if (e.dataTransfer?.types?.includes('Files')) {
+        e.preventDefault()
+      }
+    }
+
+    const onDrop = (e: DragEvent) => {
+      if (e.dataTransfer?.types?.includes('Files')) {
+        e.preventDefault()
+      }
+      if (e.dataTransfer?.files && e.dataTransfer.files.length > 0) {
+        const paths = Array.from(e.dataTransfer.files)
+          .map((file) => window.electronUtils?.getPathForFile(file))
+          .filter(Boolean) as string[]
+        if (paths.length > 0) {
+          void addFiles(paths)
+        }
+      }
+    }
+
+    document.addEventListener('dragover', onDragOver)
+    document.addEventListener('drop', onDrop)
+    return () => {
+      document.removeEventListener('dragover', onDragOver)
+      document.removeEventListener('drop', onDrop)
+    }
+  }, [addFiles, isActive])
+
+  const visibleRecentWorkDirs = recentWorkDirs
+    .filter((entry) => entry.path !== workDir)
+    .slice(0, MAX_VISIBLE_RECENT_WORK_DIRS)
+  const currentWorkDirLabel = effectiveWorkDir ? basename(effectiveWorkDir) || effectiveWorkDir : 'Not set'
+  const currentWorkDirPath = effectiveWorkDir ? compactWorkDirPath(effectiveWorkDir) : ''
+
+  return (
+    <div
+      data-tour-id="chat-composer"
+      className={cn(
+        'crabapple-chat-input rounded-lg border bg-background shadow-none',
+        contextChip ? 'border-primary/40 ring-1 ring-primary/25' : 'border-border',
+      )}
+    >
+      {attachments.length > 0 && (
+        <div className="flex flex-wrap gap-2 px-4 pb-1 pt-3">
+          {attachments.map((attachment) => {
+            const attachmentType = getAttachmentTypeLabel(attachment)
+            const attachmentName = getAttachmentDisplayName(attachment)
+            const Icon = getAttachmentIcon(getAttachmentIconKind(attachment))
+
+            return (
+              <span
+                key={attachment.id}
+                className="group relative inline-flex min-w-[230px] max-w-[320px] items-center gap-2 rounded-xl border border-border/50 bg-muted/80 px-2.5 py-2"
+              >
+                <span
+                  className={cn(
+                    'flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-lg',
+                    attachment.isImage && attachment.thumbnailUrl
+                      ? 'bg-muted'
+                      : getAttachmentToneClass(attachmentType)
+                  )}
+                >
+                  {attachment.isImage && attachment.thumbnailUrl ? (
+                    <img src={attachment.thumbnailUrl} alt="" className="size-full object-cover" />
+                  ) : (
+                    <Icon className="size-5" />
+                  )}
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-sm leading-tight font-medium">{attachmentName}</span>
+                  <span className="block pt-0.5 text-xs leading-tight text-muted-foreground">{attachmentType}</span>
+                </span>
+                <button
+                  type="button"
+                  onClick={() => removeAttachment(attachment.id)}
+                  className="absolute right-1 top-1 flex size-5 items-center justify-center rounded-full border border-border/70 bg-background/70 text-muted-foreground opacity-0 transition-[opacity,color] duration-150 hover:text-foreground group-hover:opacity-100 focus-visible:opacity-100"
+                >
+                  <X className="size-3.5" />
+                </button>
+              </span>
+            )
+          })}
+        </div>
+      )}
+      <input
+        ref={fileInputRef}
+        type="file"
+        multiple
+        className="hidden"
+        onChange={(e) => {
+          const files = e.target.files
+          if (!files || files.length === 0) return
+          const paths = Array.from(files)
+            .map((file) => window.electronUtils?.getPathForFile(file))
+            .filter(Boolean) as string[]
+          if (paths.length > 0) {
+            void addFiles(paths)
+          }
+          e.target.value = ''
+        }}
+      />
+      {isRecording ? (
+        /* ── Recording bar ── */
+        <div className="flex items-center gap-3 px-4 py-3">
+          <button
+            type="button"
+            onClick={onCancelRecording}
+            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            aria-label="取消录音"
+          >
+            <X className="h-4 w-4" />
+          </button>
+          <div className="flex min-w-0 flex-1 flex-col gap-1 overflow-hidden">
+            <VoiceWaveform audioLevelsRef={audioLevelsRef} />
+            <div
+              className={cn(
+                'min-h-5 truncate text-sm leading-5',
+                recordingText?.trim() ? 'text-foreground' : 'text-muted-foreground'
+              )}
+            >
+              {recordingText?.trim() || (recordingState === 'stopping' ? 'Finalizing...' : 'Listening...')}
+            </div>
+          </div>
+          <Button
+            size="icon"
+            onClick={onSubmitRecording}
+            disabled={recordingState === 'stopping'}
+            className={cn(
+              'h-7 w-7 shrink-0 rounded-full transition-all',
+              recordingState !== 'stopping'
+                ? 'bg-primary text-primary-foreground hover:bg-primary/90'
+                : 'bg-muted text-muted-foreground'
+            )}
+          >
+            {recordingState === 'stopping' ? (
+              <LoaderIcon className="h-4 w-4 animate-spin" />
+            ) : (
+              <ArrowUp className="h-4 w-4" />
+            )}
+          </Button>
+        </div>
+      ) : (
+        /* ── Normal input ── */
+        <>
+      {contextChip && (
+        <div className="px-4 pt-3">
+          <div className="flex items-center">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-primary px-2.5 py-0.5 text-xs font-semibold text-primary-foreground">
+              {contextChip.icon === 'reply' ? <MessageCircle className="h-3 w-3" /> : <ListTodo className="h-3 w-3" />}
+              {contextChip.label}
+              <button
+                type="button"
+                onClick={contextChip.onDismiss}
+                aria-label="返回对话"
+                className="rounded-full opacity-70 hover:opacity-100"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </span>
+          </div>
+          {contextChip.quote && (
+            /* WhatsApp-style quoted context: what you're replying to, right
+               above where you type. */
+            <div className="mt-1.5 line-clamp-2 border-l-2 border-border pl-2 text-xs text-muted-foreground">
+              {contextChip.quote}
+            </div>
+          )}
+        </div>
+      )}
+      <div className="px-4 pt-4 pb-2">
+        <PromptInputTextarea
+          placeholder={placeholder ?? '输入你的消息...'}
+          onKeyDown={handleKeyDown}
+          autoFocus={isActive}
+          focusTrigger={isActive ? `${runId ?? 'new'}:${focusNonce}:${focusSignal ?? 0}` : undefined}
+          className="min-h-6 rounded-none border-0 py-0 shadow-none focus-visible:ring-0"
+        />
+      </div>
+      <div ref={toolbarRef} className="flex items-center gap-2 px-4 pb-3">
+        <div ref={leftGroupRef} className="flex min-w-0 items-center gap-2 overflow-hidden">
+        <DropdownMenu>
+          <Tooltip delayDuration={CHAT_INPUT_TOOLTIP_DELAY_MS}>
+            <TooltipTrigger asChild>
+              <DropdownMenuTrigger asChild>
+                <button
+                  type="button"
+                  className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  aria-label="Add"
+                >
+                  <Plus className="h-4 w-4" />
+                </button>
+              </DropdownMenuTrigger>
+            </TooltipTrigger>
+            <TooltipContent side="top">
+              {isCodeLocked ? 'Add files' : workDir ? 'Add files or change work directory' : 'Add files or set work directory'}
+            </TooltipContent>
+          </Tooltip>
+          <DropdownMenuContent align="start" className="w-72 max-w-[calc(100vw-2rem)] p-2">
+            <div className="rounded-[14px] border border-border/80 bg-background p-1">
+              <DropdownMenuItem onSelect={() => fileInputRef.current?.click()} className="h-9 rounded-[9px] px-2.5">
+                <ImagePlus className="size-4" />
+                <span>添加文件或照片</span>
+              </DropdownMenuItem>
+
+              {/* A bound code session pins the directory — show it, no controls. */}
+              {isCodeLocked ? (
+                <Tooltip delayDuration={CHAT_INPUT_TOOLTIP_DELAY_MS}>
+                  <TooltipTrigger asChild>
+                    <div className="flex h-auto items-center gap-2 rounded-[9px] px-2.5 py-2 text-muted-foreground">
+                      <FolderCheck className="size-4 shrink-0" />
+                      <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+                        <span className="truncate text-sm">{currentWorkDirLabel}</span>
+                        <span className="truncate text-xs">由编码会话固定</span>
+                      </span>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent side="right">{effectiveWorkDir}</TooltipContent>
+                </Tooltip>
+              ) : (
+              /* Working directory lives behind a submenu so the main menu stays to two
+                 items. One hover/click away for power users; out of the way otherwise. */
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger className="h-9 rounded-[9px] px-2.5">
+                  <FolderCog className="size-4" />
+                  <span className="flex min-w-0 flex-1 items-center justify-between gap-3">
+                    <span>设置工作目录</span>
+                    <span className="min-w-0 max-w-[110px] truncate text-xs text-muted-foreground">
+                      {currentWorkDirLabel}
+                    </span>
+                  </span>
+                </DropdownMenuSubTrigger>
+                <DropdownMenuSubContent className="w-72 max-w-[calc(100vw-2rem)] p-1">
+                  {/* Current selection — shown for context only when one is set. */}
+                  {workDir && (
+                    <Tooltip delayDuration={CHAT_INPUT_TOOLTIP_DELAY_MS}>
+                      <TooltipTrigger asChild>
+                        <div className="mb-1 flex items-center gap-2 rounded-[9px] bg-blue-50/80 px-2.5 py-2 text-blue-700 dark:bg-blue-950/30 dark:text-blue-300">
+                          <FolderCheck className="size-4 shrink-0 text-blue-600 dark:text-blue-300" />
+                          <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+                            <span className="truncate text-sm font-medium">{currentWorkDirLabel}</span>
+                            <span className="truncate text-xs text-blue-700/70 dark:text-blue-300/70">
+                              {currentWorkDirPath}
+                            </span>
+                          </span>
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent side="right">{workDir}</TooltipContent>
+                    </Tooltip>
+                  )}
+
+                  {/* Primary action: choose when unset, change when set. Always on top. */}
+                  <DropdownMenuItem
+                    onSelect={() => { void handleSetWorkDir() }}
+                    className="h-9 rounded-[9px] px-2.5"
+                  >
+                    <FolderOpen className="size-4" />
+                    <span>{workDir ? 'Change folder…' : 'Choose a folder…'}</span>
+                  </DropdownMenuItem>
+
+                  {visibleRecentWorkDirs.length > 0 && (
+                    <>
+                      <div className="px-2.5 pb-1 pt-2 text-[10.5px] font-semibold uppercase tracking-wider text-muted-foreground">
+                        Recent
+                      </div>
+                      {visibleRecentWorkDirs.map((entry) => {
+                        const name = basename(entry.path) || entry.path
+                        const when = formatRecentWorkDirTime(entry.lastUsedAt)
+                        return (
+                          <Tooltip key={entry.path} delayDuration={CHAT_INPUT_TOOLTIP_DELAY_MS}>
+                            <TooltipTrigger asChild>
+                              <DropdownMenuItem
+                                onSelect={() => { void handleSelectRecentWorkDir(entry.path) }}
+                                className="h-8 rounded-[9px] px-2.5"
+                              >
+                                <FolderClock className="size-4" />
+                                <span className="min-w-0 flex-1 truncate">{name}</span>
+                                {when && <span className="shrink-0 text-xs text-muted-foreground">{when}</span>}
+                              </DropdownMenuItem>
+                            </TooltipTrigger>
+                            <TooltipContent side="right">{entry.path}</TooltipContent>
+                          </Tooltip>
+                        )
+                      })}
+                    </>
+                  )}
+
+                  {/* Clear — only meaningful once a directory is set. Kept at the bottom. */}
+                  {workDir && (
+                    <>
+                      <div className="my-1 h-px bg-border/60" />
+                      <DropdownMenuItem
+                        onSelect={handleClearWorkDir}
+                        className="h-8 rounded-[9px] px-2.5 text-red-600 focus:bg-red-50 focus:text-red-600 dark:text-red-400 dark:focus:bg-red-950/30"
+                      >
+                        <X className="size-4" />
+                        <span>清除文件夹</span>
+                      </DropdownMenuItem>
+                    </>
+                  )}
+                </DropdownMenuSubContent>
+              </DropdownMenuSub>
+              )}
+            </div>
+          </DropdownMenuContent>
+        </DropdownMenu>
+        {effectiveWorkDir && collapseLevel < 8 && (
+          <Tooltip delayDuration={CHAT_INPUT_TOOLTIP_DELAY_MS}>
+            <TooltipTrigger asChild>
+              {/* Level 4: collapse to a square icon */}
+              <div className={cn(
+                "group flex h-7 shrink-0 items-center rounded-full border border-border bg-muted/40 text-xs text-muted-foreground transition-colors",
+                !isCodeLocked && "hover:bg-muted hover:text-foreground",
+                collapseLevel >= 4 ? "w-7 justify-center" : "max-w-[180px] pl-2.5 pr-2"
+              )}>
+                <button
+                  type="button"
+                  onClick={handleSetWorkDir}
+                  disabled={isCodeLocked}
+                  className={cn("flex min-w-0 items-center gap-1.5", isCodeLocked && "cursor-default")}
+                >
+                  {isCodeLocked
+                    ? <Lock className="h-3 w-3 shrink-0" />
+                    : <FolderCog className="h-3.5 w-3.5 shrink-0" />}
+                  {collapseLevel < 4 && <span className="truncate">{basename(effectiveWorkDir) || effectiveWorkDir}</span>}
+                </button>
+                {collapseLevel < 4 && !isCodeLocked && (
+                  <button
+                    type="button"
+                    onClick={handleClearWorkDir}
+                    aria-label="移除工作目录"
+                    className="flex h-3.5 w-0 shrink-0 items-center justify-center overflow-hidden opacity-0 transition-all duration-150 ease-out hover:text-red-500 group-hover:ml-1 group-hover:w-3.5 group-hover:opacity-100"
+                  >
+                    <X className="h-3.5 w-3.5 shrink-0" />
+                  </button>
+                )}
+              </div>
+            </TooltipTrigger>
+            <TooltipContent side="top">
+              {isCodeLocked
+                ? `Pinned by the coding session: ${effectiveWorkDir}`
+                : `Work directory: ${effectiveWorkDir}`}
+            </TooltipContent>
+          </Tooltip>
+        )}
+        {searchAvailable && collapseLevel < 7 && (
+          <button
+            type="button"
+            onClick={() => setSearchEnabled((v) => !v)}
+            aria-label="搜索"
+            aria-pressed={searchEnabled}
+            className={cn(
+              'flex h-7 shrink-0 items-center rounded-full border px-1.5 transition-colors duration-150 ease-out',
+              searchEnabled
+                ? 'border-blue-200 bg-blue-50 text-blue-600 hover:bg-blue-100 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-400 dark:hover:bg-blue-900'
+                : 'border-transparent text-muted-foreground hover:bg-muted hover:text-foreground'
+            )}
+          >
+            <Globe className="h-4 w-4 shrink-0" />
+            {searchEnabled && collapseLevel < 3 && (
+              <span className="ml-1.5 whitespace-nowrap text-xs font-medium">
+                Search
+              </span>
+            )}
+          </button>
+        )}
+        {collapseLevel < 6 && (
+        <Tooltip delayDuration={CHAT_INPUT_TOOLTIP_DELAY_MS}>
+          <TooltipTrigger asChild>
+            <button
+              type="button"
+              onClick={() => {
+                if (runId) return
+                setPermissionMode((mode) => mode === 'auto' ? 'manual' : 'auto')
+              }}
+              disabled={Boolean(runId)}
+              className={cn(
+                "flex h-7 shrink-0 items-center gap-1.5 rounded-full text-xs font-medium transition-colors",
+                collapseLevel >= 2 ? "w-7 justify-center" : "px-2.5",
+                permissionMode === 'auto'
+                  ? "bg-secondary text-foreground hover:bg-secondary/70"
+                  : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                runId && "cursor-not-allowed opacity-70 hover:bg-secondary"
+              )}
+              aria-label="权限模式"
+            >
+              <ShieldCheck className="h-3.5 w-3.5 shrink-0" />
+              {collapseLevel < 2 && <span>{permissionMode === 'auto' ? 'Auto' : 'Manual'}</span>}
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="top">
+            {runId
+              ? `Permission mode is fixed for this run: ${permissionMode === 'auto' ? 'Auto' : 'Manual'}`
+              : permissionMode === 'auto'
+                ? 'Auto-permission on — click for manual approval prompts'
+                : 'Manual approval prompts — click for auto-permission'}
+          </TooltipContent>
+        </Tooltip>
+        )}
+        {codeModeFeatureEnabled && collapseLevel < 5 && ((isCodeLocked || codeModeEnabled) ? (
+          collapseLevel >= 1 ? (
+            /* Level 1: collapse the pill to a single icon */
+            <Tooltip delayDuration={CHAT_INPUT_TOOLTIP_DELAY_MS}>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  onClick={() => { if (!isCodeLocked) setCodeModeEnabled(false) }}
+                  disabled={isCodeLocked}
+                  className={cn(
+                    "flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-secondary text-foreground transition-colors",
+                    isCodeLocked ? "cursor-default" : "hover:bg-secondary/70",
+                  )}
+                >
+                  <Terminal className="h-3.5 w-3.5" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="top">
+                {isCodeLocked
+                  ? `Coding session — ${codingAgent === 'claude' ? 'Claude Code' : 'Codex'}`
+                  : `Code mode on (${codingAgent === 'claude' ? 'Claude Code' : 'Codex'}) — click to disable`}
+              </TooltipContent>
+            </Tooltip>
+          ) : (
+            <div className="flex h-7 shrink-0 items-center rounded-full bg-secondary text-xs font-medium text-foreground">
+              <Tooltip delayDuration={CHAT_INPUT_TOOLTIP_DELAY_MS}>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    onClick={() => { if (!isCodeLocked) setCodeModeEnabled(false) }}
+                    disabled={isCodeLocked}
+                    className={cn(
+                      "flex h-full items-center gap-1.5 rounded-l-full pl-2.5 pr-2 transition-colors",
+                      isCodeLocked ? "cursor-default" : "hover:bg-secondary/70",
+                    )}
+                  >
+                    {isCodeLocked ? <Lock className="h-3 w-3" /> : <Terminal className="h-3.5 w-3.5" />}
+                    <span>代码</span>
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="top">
+                  {isCodeLocked ? 'Pinned by the coding session' : 'Code mode on — click to disable'}
+                </TooltipContent>
+              </Tooltip>
+              <span className="text-foreground/30">·</span>
+              <Tooltip delayDuration={CHAT_INPUT_TOOLTIP_DELAY_MS}>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    onClick={handleToggleCodingAgent}
+                    disabled={isCodeLocked}
+                    className={cn(
+                      "flex h-full items-center rounded-r-full pl-2 pr-2.5 transition-colors",
+                      isCodeLocked ? "cursor-default" : "hover:bg-secondary/70",
+                    )}
+                  >
+                    <span>{codingAgent === 'claude' ? 'Claude' : 'Codex'}</span>
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="top">
+                  {isCodeLocked
+                    ? `Coding agent fixed by the session: ${codingAgent === 'claude' ? 'Claude Code' : 'Codex'}`
+                    : `Coding agent: ${codingAgent === 'claude' ? 'Claude Code' : 'Codex'} — click to swap`}
+                </TooltipContent>
+              </Tooltip>
+            </div>
+          )
+        ) : (
+          <Tooltip delayDuration={CHAT_INPUT_TOOLTIP_DELAY_MS}>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                onClick={() => setCodeModeEnabled(true)}
+                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                aria-label="代码模式"
+              >
+                <Terminal className="h-4 w-4" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="top">使用编码代理（Claude Code 或 Codex）</TooltipContent>
+          </Tooltip>
+        ))}
+        </div>
+        {collapseLevel >= 5 && (
+          <DropdownMenu>
+            <Tooltip delayDuration={CHAT_INPUT_TOOLTIP_DELAY_MS}>
+              <TooltipTrigger asChild>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    type="button"
+                    aria-label="更多选项"
+                    className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  >
+                    <MoreHorizontal className="h-4 w-4" />
+                  </button>
+                </DropdownMenuTrigger>
+              </TooltipTrigger>
+              <TooltipContent side="top">更多选项</TooltipContent>
+            </Tooltip>
+            <DropdownMenuContent align="start" side="top" className="min-w-52">
+              {effectiveWorkDir && collapseLevel >= 8 && (
+                <DropdownMenuItem disabled={isCodeLocked} onSelect={() => { void handleSetWorkDir() }}>
+                  {isCodeLocked ? <Lock className="size-4" /> : <FolderCog className="size-4" />}
+                  <span className="min-w-0 flex-1 truncate">{basename(effectiveWorkDir) || effectiveWorkDir}</span>
+                </DropdownMenuItem>
+              )}
+              {searchAvailable && collapseLevel >= 7 && (
+                <DropdownMenuCheckboxItem
+                  checked={searchEnabled}
+                  onSelect={(e) => e.preventDefault()}
+                  onCheckedChange={(c) => setSearchEnabled(Boolean(c))}
+                >
+                  Web search
+                </DropdownMenuCheckboxItem>
+              )}
+              {collapseLevel >= 6 && (
+                <DropdownMenuCheckboxItem
+                  checked={permissionMode === 'auto'}
+                  disabled={Boolean(runId)}
+                  onSelect={(e) => e.preventDefault()}
+                  onCheckedChange={(c) => setPermissionMode(c ? 'auto' : 'manual')}
+                >
+                  Auto-approve actions
+                </DropdownMenuCheckboxItem>
+              )}
+              {codeModeFeatureEnabled && collapseLevel >= 5 && (
+                <>
+                  <DropdownMenuCheckboxItem
+                    checked={isCodeLocked || codeModeEnabled}
+                    disabled={isCodeLocked}
+                    onSelect={(e) => e.preventDefault()}
+                    onCheckedChange={(c) => setCodeModeEnabled(Boolean(c))}
+                  >
+                    Code mode
+                  </DropdownMenuCheckboxItem>
+                  {(isCodeLocked || codeModeEnabled) && (
+                    <DropdownMenuItem disabled={isCodeLocked} onSelect={(e) => { e.preventDefault(); handleToggleCodingAgent() }}>
+                      <Terminal className="size-4" />
+                      <span className="min-w-0 flex-1">编码代理</span>
+                      <span className="text-xs text-muted-foreground">{codingAgent === 'claude' ? 'Claude' : 'Codex'}</span>
+                    </DropdownMenuItem>
+                  )}
+                </>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
+        <div className="flex-1" />
+        <ModelSelector
+          value={selection}
+          onChange={handleSelectionChange}
+          lockedModel={lockedModel}
+          effortSelectable
+        />
+        {onStartCall && (
+          <div className="flex shrink-0 items-center">
+            <Tooltip delayDuration={CHAT_INPUT_TOOLTIP_DELAY_MS}>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (inCall) {
+                      onEndCall?.()
+                    } else if (callAvailable) {
+                      onStartCall('share')
+                    }
+                  }}
+                  className={cn(
+                    'flex h-7 w-7 shrink-0 items-center justify-center rounded-full transition-colors',
+                    inCall
+                      ? 'bg-red-600 text-white hover:bg-red-500'
+                      : callAvailable
+                        ? 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                        : 'cursor-default text-muted-foreground/40'
+                  )}
+                  aria-label={inCall ? 'End call' : 'Start a call'}
+                >
+                  {inCall ? <PhoneOff className="h-4 w-4" /> : <Phone className="h-4 w-4" />}
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="top">
+                {inCall
+                  ? 'End call'
+                  : callAvailable
+                    ? 'Start a call — it sees your screen while you talk it through'
+                    : 'Calls need voice input and output configured'}
+              </TooltipContent>
+            </Tooltip>
+            {!inCall && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    type="button"
+                    className="flex h-7 w-4 shrink-0 items-center justify-center text-muted-foreground transition-colors hover:text-foreground"
+                    aria-label="通话选项"
+                  >
+                    <ChevronDown className="h-3 w-3" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-72">
+                  {CALL_PRESET_MENU.map(({ preset, label, description, Icon }) => (
+                    <DropdownMenuItem
+                      key={preset}
+                      disabled={!callAvailable}
+                      onSelect={() => onStartCall(preset)}
+                      className="items-start gap-3 py-2"
+                    >
+                      <Icon className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+                      <span className="min-w-0">
+                        <span className="block text-sm font-medium leading-tight">{label}</span>
+                        <span className="block pt-0.5 text-xs leading-tight text-muted-foreground">{description}</span>
+                      </span>
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+          </div>
+        )}
+        {voiceAvailable && onStartRecording && (
+          <button
+            type="button"
+            onClick={onStartRecording}
+            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            aria-label="语音输入"
+          >
+            <Mic className="h-4 w-4" />
+          </button>
+        )}
+        {isProcessing ? (
+          <Tooltip delayDuration={CHAT_INPUT_TOOLTIP_DELAY_MS}>
+            <TooltipTrigger asChild>
+              <Button
+                size="icon"
+                onClick={onStop}
+                aria-label={isStopping ? 'Force stop generation' : 'Stop generation'}
+                className={cn(
+                  'h-7 w-7 shrink-0 rounded-full transition-all',
+                  isStopping
+                    ? 'bg-destructive text-destructive-foreground hover:bg-destructive/90'
+                    : 'bg-primary text-primary-foreground hover:bg-primary/90'
+                )}
+              >
+                {isStopping ? (
+                  <LoaderIcon className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Square className="h-3 w-3 fill-current" />
+                )}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="top">
+              {isStopping ? 'Click again to force stop' : 'Stop generation'}
+            </TooltipContent>
+          </Tooltip>
+        ) : (
+          <Button
+            size="icon"
+            onClick={handleSubmit}
+            disabled={!canSubmit}
+            className={cn(
+              'h-7 w-7 shrink-0 rounded-full transition-all',
+              canSubmit
+                ? 'bg-primary text-primary-foreground hover:bg-primary/90'
+                : 'bg-muted text-muted-foreground'
+            )}
+          >
+            <ArrowUp className="h-4 w-4" />
+          </Button>
+        )}
+      </div>
+        </>
+      )}
+    </div>
+  )
+}
+
+/** Animated waveform bars for the recording indicator */
+// Live recording waveform. Each bar is one captured audio frame; bars accumulate
+// from the left and grow rightward until they fill the width, then scroll (oldest
+// drops off the left). Bar height tracks that frame's mic amplitude, so the
+// waveform visibly reacts to how loud the user is speaking.
+const WAVE_BAR_WIDTH = 3 // px
+const WAVE_BAR_GAP = 2 // px
+const WAVE_BAR_PITCH = WAVE_BAR_WIDTH + WAVE_BAR_GAP
+const WAVE_BAR_MIN = 1.5 // px — floor so silence still shows a faint line
+const WAVE_BAR_MAX = 18 // px — fits inside the h-5 (20px) row
+const WAVE_CURVE = 0.8 // <1 lifts quiet speech slightly; near-linear keeps loud peaks tall
+
+function waveBarHeight(level: number): number {
+  // `level` is already auto-gained to ~0..1 in the hook, so map it close to linearly
+  // (a gentle curve) — louder voice ⇒ visibly taller bar, quiet ⇒ short.
+  const amp = Math.min(1, Math.max(0, level)) ** WAVE_CURVE
+  return WAVE_BAR_MIN + amp * (WAVE_BAR_MAX - WAVE_BAR_MIN)
+}
+
+function VoiceWaveform({ audioLevelsRef }: { audioLevelsRef?: React.MutableRefObject<number[]> }) {
+  const containerRef = useRef<HTMLDivElement>(null)
+  const [bars, setBars] = useState<number[]>([])
+  // How many bars fit in the current width; recomputed on resize.
+  const maxBarsRef = useRef(48)
+
+  useEffect(() => {
+    const el = containerRef.current
+    if (!el) return
+    const measure = () => {
+      maxBarsRef.current = Math.max(1, Math.floor(el.clientWidth / WAVE_BAR_PITCH))
+    }
+    measure()
+    const ro = new ResizeObserver(measure)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
+
+  useEffect(() => {
+    if (!audioLevelsRef) return
+    let raf = 0
+    let lastSig = ''
+    const tick = () => {
+      const levels = audioLevelsRef.current
+      const maxBars = maxBarsRef.current
+      const next = levels.length > maxBars ? levels.slice(levels.length - maxBars) : levels
+      // Only re-render when the visible window actually changed. Length covers
+      // the growth phase; the trailing value covers the scrolling phase once full.
+      const sig = `${next.length}:${next.length ? next[next.length - 1] : 0}`
+      if (sig !== lastSig) {
+        lastSig = sig
+        setBars(next.slice())
+      }
+      raf = requestAnimationFrame(tick)
+    }
+    raf = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(raf)
+  }, [audioLevelsRef])
+
+  return (
+    <div
+      ref={containerRef}
+      className="flex h-5 w-full items-center overflow-hidden"
+      style={{ gap: `${WAVE_BAR_GAP}px` }}
+    >
+      {/* Each newly-appended bar mounts with `voice-bar-in` (grows + fades in) so it
+          doesn't pop. Once the strip is full and values scroll through the bars, the
+          height transition makes them flow smoothly instead of stepping. */}
+      {bars.map((level, i) => (
+        <span
+          key={i}
+          className="shrink-0 rounded-full bg-primary"
+          style={{
+            width: `${WAVE_BAR_WIDTH}px`,
+            height: `${waveBarHeight(level)}px`,
+            transformOrigin: 'center',
+            transition: 'height 90ms linear',
+            animation: 'voice-bar-in 130ms ease-out',
+          }}
+        />
+      ))}
+      <style>{`
+        @keyframes voice-bar-in {
+          from { transform: scaleY(0.15); opacity: 0; }
+          to { transform: scaleY(1); opacity: 1; }
+        }
+      `}</style>
+    </div>
+  )
+}
+
+export interface ChatInputWithMentionsProps {
+  knowledgeFiles: string[]
+  recentFiles: string[]
+  visibleFiles: string[]
+  onSubmit: (message: PromptInputMessage, mentions?: FileMention[], attachments?: StagedAttachment[], searchEnabled?: boolean, codeMode?: 'claude' | 'codex', permissionMode?: PermissionMode) => void
+  onStop?: () => void
+  isProcessing: boolean
+  isStopping?: boolean
+  isActive?: boolean
+  presetMessage?: string
+  onPresetMessageConsumed?: () => void
+  runId?: string | null
+  initialDraft?: string
+  onDraftChange?: (text: string) => void
+  isRecording?: boolean
+  recordingText?: string
+  recordingState?: 'connecting' | 'listening' | 'stopping'
+  audioLevelsRef?: React.MutableRefObject<number[]>
+  onStartRecording?: () => void
+  onSubmitRecording?: () => void | Promise<void>
+  onCancelRecording?: () => void
+  voiceAvailable?: boolean
+  inCall?: boolean
+  onStartCall?: (preset: CallPreset) => void
+  onEndCall?: () => void
+  callAvailable?: boolean
+  onSelectionChange?: (selection: ModelSelection | null) => void
+  initialSelection?: ModelSelection | null
+  restoredSelection?: ModelSelection | null
+  workDir?: string | null
+  onWorkDirChange?: (value: string | null) => void
+  /** Set when this chat is bound to a Code-section session — freezes workdir + agent. */
+  codeSessionLock?: { cwd: string; agent: 'claude' | 'codex' } | null
+  /** Destination chip: the composer is visibly writing somewhere other than
+   * the chat (e.g. "To-do"). Rendered above the input with a dismiss ✕;
+   * Escape also dismisses. */
+  contextChip?: { label: string; icon?: 'todo' | 'reply'; quote?: string; onDismiss: () => void }
+  /** Placeholder override (pairs with contextChip). */
+  placeholder?: string
+  /** Bump to focus the input from outside (e.g. the list's ＋ affordance). */
+  focusSignal?: number
+}
+
+export function ChatInputWithMentions({
+  knowledgeFiles,
+  recentFiles,
+  visibleFiles,
+  onSubmit,
+  onStop,
+  isProcessing,
+  isStopping,
+  isActive = true,
+  presetMessage,
+  onPresetMessageConsumed,
+  runId,
+  initialDraft,
+  onDraftChange,
+  isRecording,
+  recordingText,
+  recordingState,
+  audioLevelsRef,
+  onStartRecording,
+  onSubmitRecording,
+  onCancelRecording,
+  voiceAvailable,
+  inCall,
+  onStartCall,
+  onEndCall,
+  callAvailable,
+  onSelectionChange,
+  initialSelection,
+  restoredSelection,
+  workDir,
+  onWorkDirChange,
+  codeSessionLock,
+  contextChip,
+  placeholder,
+  focusSignal,
+}: ChatInputWithMentionsProps) {
+  return (
+    <PromptInputProvider knowledgeFiles={knowledgeFiles} recentFiles={recentFiles} visibleFiles={visibleFiles}>
+      <ChatInputInner
+        onSubmit={onSubmit}
+        onStop={onStop}
+        isProcessing={isProcessing}
+        isStopping={isStopping}
+        isActive={isActive}
+        presetMessage={presetMessage}
+        onPresetMessageConsumed={onPresetMessageConsumed}
+        runId={runId}
+        initialDraft={initialDraft}
+        onDraftChange={onDraftChange}
+        isRecording={isRecording}
+        recordingText={recordingText}
+        recordingState={recordingState}
+        audioLevelsRef={audioLevelsRef}
+        onStartRecording={onStartRecording}
+        onSubmitRecording={onSubmitRecording}
+        onCancelRecording={onCancelRecording}
+        voiceAvailable={voiceAvailable}
+        inCall={inCall}
+        onStartCall={onStartCall}
+        onEndCall={onEndCall}
+        callAvailable={callAvailable}
+        onSelectionChange={onSelectionChange}
+        initialSelection={initialSelection}
+        restoredSelection={restoredSelection}
+        workDir={workDir}
+        onWorkDirChange={onWorkDirChange}
+        codeSessionLock={codeSessionLock}
+        contextChip={contextChip}
+        placeholder={placeholder}
+        focusSignal={focusSignal}
+      />
+    </PromptInputProvider>
+  )
+}

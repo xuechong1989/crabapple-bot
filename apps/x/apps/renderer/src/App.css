@@ -1,0 +1,1494 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+/* Required for Streamdown markdown rendering (bullet points, lists, etc.) */
+@source "../node_modules/streamdown/dist/*.js";
+
+@custom-variant dark (&:is(.dark *));
+
+#root {
+  width: 100%;
+  height: 100vh;
+  margin: 0;
+  padding: 0;
+}
+
+.logo {
+  height: 6em;
+  padding: 1.5em;
+  will-change: filter;
+  transition: filter 300ms;
+}
+.logo:hover {
+  filter: drop-shadow(0 0 2em #646cffaa);
+}
+.logo.react:hover {
+  filter: drop-shadow(0 0 2em #61dafbaa);
+}
+
+@keyframes logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Radix Collapsible expand/collapse — animate height (via the radix CSS var)
+   plus a subtle fade. Used by the web search card. */
+@keyframes collapsible-down {
+  from {
+    height: 0;
+    opacity: 0;
+  }
+  to {
+    height: var(--radix-collapsible-content-height);
+    opacity: 1;
+  }
+}
+
+@keyframes collapsible-up {
+  from {
+    height: var(--radix-collapsible-content-height);
+    opacity: 1;
+  }
+  to {
+    height: 0;
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  a:nth-of-type(2) .logo {
+    animation: logo-spin infinite 20s linear;
+  }
+}
+
+.card {
+  padding: 2em;
+}
+
+.read-the-docs {
+  color: #888;
+}
+
+/* Onboarding dot grid background */
+.onboarding-dot-grid {
+  background-image: radial-gradient(circle, oklch(0.5 0 0 / 0.08) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+.dark .onboarding-dot-grid {
+  background-image: radial-gradient(circle, oklch(0.7 0 0 / 0.06) 1px, transparent 1px);
+}
+
+/* Inbox surface — mapped onto the app's design tokens so it follows the same
+   palette, accent, and theme switching as the rest of Crabapple Bot. Light/dark is
+   handled by the app tokens (:root / .dark), so no separate .light override. */
+.gmail-shell {
+  --gm-bg: var(--background);
+  --gm-bg-card: var(--card-surface);
+  --gm-bg-input: var(--muted);
+  --gm-bg-row-hover: var(--accent);
+  --gm-bg-row-selected: var(--crabapple-wash);
+  --gm-bg-row-selected-hover: color-mix(in oklab, var(--primary) 18%, var(--background));
+  --gm-bg-iframe: #ffffff;
+  --gm-bg-pill: var(--background);
+  --gm-bg-pill-hover: var(--accent);
+  --gm-text: var(--foreground);
+  --gm-text-strong: var(--foreground);
+  --gm-text-muted: var(--muted-foreground);
+  --gm-text-faint: color-mix(in oklab, var(--muted-foreground) 70%, var(--background));
+  --gm-text-body: color-mix(in oklab, var(--foreground) 88%, var(--background));
+  --gm-border: var(--border);
+  --gm-border-strong: var(--crabapple-hairline);
+  --gm-accent: var(--primary);
+  --gm-accent-hover: color-mix(in oklab, var(--primary) 90%, transparent);
+  --gm-accent-glow: color-mix(in oklab, var(--primary) 40%, transparent);
+  --gm-accent-fg: var(--primary-foreground);
+  --gm-icon-hover-bg: var(--accent);
+  --gm-placeholder: var(--muted-foreground);
+
+  display: flex;
+  height: 100%;
+  min-height: 0;
+  width: 100%;
+  overflow: hidden;
+  background: var(--background);
+  color: var(--foreground);
+}
+
+.gmail-main {
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  padding: 0;
+}
+
+.gmail-topbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 52px;
+  padding: 0 20px;
+  border-bottom: 1px solid var(--gm-border);
+}
+
+.gmail-topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.gmail-search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: min(520px, 100%);
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 8px;
+  background: var(--gm-bg-input);
+  color: var(--gm-text-muted);
+}
+
+.gmail-search input {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--gm-text);
+  font-size: 13px;
+  letter-spacing: 0.01em;
+}
+
+.gmail-search input::placeholder {
+  color: var(--gm-placeholder);
+}
+
+.gmail-search-clear {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--gm-text-muted);
+  cursor: pointer;
+  transition: background 120ms ease, color 120ms ease;
+}
+
+.gmail-search-clear:hover {
+  background: var(--gm-icon-hover-bg);
+  color: var(--gm-text);
+}
+
+.gmail-icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--gm-text-muted);
+  cursor: pointer;
+  transition: background 120ms ease, color 120ms ease;
+}
+
+.gmail-icon-button:hover {
+  background: var(--gm-icon-hover-bg);
+  color: var(--gm-text);
+}
+
+.gmail-list {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  flex: 1;
+  overflow: auto;
+  background: var(--gm-bg);
+  border: none;
+  border-radius: 0;
+}
+
+.gmail-row-group {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Native list virtualization: offscreen rows skip layout and paint entirely.
+   Applied only to rows without a mounted ThreadDetail (those hold iframes and
+   composers, which must keep rendering while offscreen). */
+.gmail-row-group-cv {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 40px;
+}
+
+/* While the list is scrolling, rows ignore the pointer so hover restyles and
+   prefetch timers don't compete with frame rendering. */
+.gmail-shell[data-scrolling] .gmail-row-shell {
+  pointer-events: none;
+}
+
+/* Archived/trashed rows slide out and collapse before removal. Removing the
+   class (failed action) snaps the row back. */
+.gmail-row-group-leaving {
+  overflow: hidden;
+  pointer-events: none;
+  animation: gmail-row-leave 160ms ease-in forwards;
+}
+
+@keyframes gmail-row-leave {
+  0% {
+    opacity: 1;
+    transform: translateX(0);
+    max-height: 48px;
+  }
+  60% {
+    opacity: 0;
+    transform: translateX(32px);
+    max-height: 48px;
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(32px);
+    max-height: 0;
+  }
+}
+
+.gmail-list-header {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  justify-content: space-between;
+  height: 32px;
+  padding: 0 24px;
+  align-items: center;
+  background: var(--gm-bg);
+  border-bottom: 1px solid var(--gm-border);
+  color: var(--gm-text-faint);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+/* Date dividers within a section (Today / Yesterday / This week / Earlier). */
+.gmail-date-divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 24px 4px;
+  color: var(--gm-text-faint);
+  font-size: 10.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  user-select: none;
+}
+
+.gmail-date-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--gm-border);
+}
+
+.gmail-list-header + .gmail-date-divider {
+  padding-top: 8px;
+}
+
+.gmail-section {
+  display: flex;
+  flex-direction: column;
+}
+
+.gmail-section + .gmail-section {
+  margin-top: 28px;
+}
+
+.gmail-section-sentinel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 28px;
+  color: var(--gm-text-faint);
+}
+
+.gmail-row-shell {
+  position: relative;
+}
+
+.gmail-row {
+  display: grid;
+  grid-template-columns: 12px minmax(140px, 0.22fr) minmax(0, 1fr) 60px;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  min-height: 40px;
+  padding: 0 24px;
+  border: none;
+  background: transparent;
+  color: var(--gm-text-muted);
+  text-align: left;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 120ms ease;
+}
+
+.gmail-row-actions {
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 120ms ease;
+  /* The overlay may extend over the subject text; a backdrop matching the
+     row's current background (see --gm-row-actions-bg below) plus a soft left
+     fade keeps it readable instead of colliding. */
+  padding-left: 18px;
+  background: linear-gradient(to right, transparent, var(--gm-row-actions-bg, var(--gm-bg-row-hover)) 18px);
+}
+
+.gmail-row-shell:hover .gmail-row-actions {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Backdrop color tracks the row state underneath the overlay. */
+.gmail-row-shell:hover {
+  --gm-row-actions-bg: var(--gm-bg-row-hover);
+}
+
+.gmail-row-shell:hover:has(.gmail-row-selected) {
+  --gm-row-actions-bg: var(--gm-bg-row-selected-hover);
+}
+
+.gmail-row-shell:hover:has(.gmail-row-selected.gmail-row-focused) {
+  --gm-row-actions-bg: var(--gm-bg-row-selected);
+}
+
+.gmail-row-shell:hover .gmail-row-date {
+  visibility: hidden;
+}
+
+.gmail-row-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--gm-text-muted);
+  cursor: pointer;
+  transition: background 120ms ease, color 120ms ease;
+}
+
+.gmail-row-action:hover {
+  background: var(--gm-bg-pill-hover);
+  color: var(--gm-text-strong);
+}
+
+.gmail-row-action-danger:hover {
+  color: var(--destructive);
+}
+
+.gmail-row-shell:hover .gmail-row {
+  background: var(--gm-bg-row-hover);
+  box-shadow: none;
+}
+
+.gmail-row-selected {
+  background: var(--gm-bg-row-selected);
+  box-shadow: inset 2px 0 0 var(--gm-accent);
+}
+
+.gmail-row-shell:hover .gmail-row-selected {
+  background: var(--gm-bg-row-selected-hover);
+}
+
+/* The j/k keyboard cursor. Declared after the hover rules (same specificity)
+   so the focus ring survives hovering the focused row. */
+.gmail-row-focused,
+.gmail-row-shell:hover .gmail-row-focused {
+  background: var(--gm-bg-row-hover);
+  box-shadow: inset 0 0 0 1px var(--gm-accent);
+}
+
+.gmail-row-selected.gmail-row-focused,
+.gmail-row-shell:hover .gmail-row-selected.gmail-row-focused {
+  background: var(--gm-bg-row-selected);
+  box-shadow: inset 2px 0 0 var(--gm-accent), inset 0 0 0 1px var(--gm-accent);
+}
+
+.gmail-row-unread {
+  color: var(--gm-text);
+}
+
+.gmail-row-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: transparent;
+}
+
+.gmail-row-unread .gmail-row-dot {
+  background: var(--gm-accent);
+  box-shadow: 0 0 8px var(--gm-accent-glow);
+}
+
+.gmail-row-sender,
+.gmail-row-content strong,
+.gmail-row-date {
+  font-size: 13px;
+  font-weight: 400;
+  letter-spacing: -0.005em;
+}
+
+.gmail-row-unread .gmail-row-sender,
+.gmail-row-unread .gmail-row-content strong {
+  font-weight: 600;
+  color: var(--gm-text-strong);
+}
+
+.gmail-row-unread .gmail-row-date {
+  color: var(--gm-text);
+}
+
+.gmail-row-sender,
+.gmail-row-content,
+.gmail-row-content span {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.gmail-row-content {
+  display: flex;
+  gap: 8px;
+  color: var(--gm-text-faint);
+  font-size: 13px;
+}
+
+/* The bold lead (summary or subject) may shrink — with ellipsis — but only
+   after the snippet span (huge shrink factor below) has fully collapsed.
+   Without this, a long summary plus the never-shrinking category chip
+   overflows the clipped row and the chip is what gets cut off. */
+.gmail-row-content strong {
+  flex-shrink: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: inherit;
+  font-weight: 400;
+}
+
+/* Snippet gives way first (chips carry .gmail-row-chip and keep shrink 0). */
+.gmail-row-content > span:not(.gmail-row-chip) {
+  flex-shrink: 1000;
+}
+
+.gmail-row-date {
+  justify-self: end;
+  color: var(--gm-text-faint);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Category / waiting-age pill at the right edge of the content column. */
+.gmail-row-chip {
+  flex-shrink: 0;
+  margin-left: auto;
+  padding: 1px 8px;
+  border: 1px solid var(--gm-border);
+  border-radius: 999px;
+  color: var(--gm-text-faint);
+  font-size: 11px;
+  line-height: 16px;
+  white-space: nowrap;
+}
+
+/* Two chips on one row (category + status): only the first takes the auto
+   margin; the second sits right next to it, so the pair clusters at the
+   right edge instead of spreading across the free space. */
+.gmail-row-chip + .gmail-row-chip {
+  margin-left: 6px;
+}
+
+.gmail-row-chip-waiting {
+  border-color: transparent;
+  background: var(--gm-bg-pill-hover);
+  color: var(--gm-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.gmail-row-chip-ready {
+  border-color: transparent;
+  background: var(--gm-bg-row-selected);
+  color: var(--gm-accent);
+}
+
+/* Shown in place of the "Needs you" section when it's empty. */
+.gmail-caughtup {
+  padding: 18px 24px;
+  color: var(--gm-text-faint);
+  font-size: 13px;
+}
+
+/* Category filter pills under the "Everything else" header. */
+.gmail-category-pills {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 24px;
+  border-bottom: 1px solid var(--gm-border);
+}
+
+.gmail-category-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 10px;
+  border: 1px solid var(--gm-border);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--gm-text-muted);
+  font-family: inherit;
+  font-size: 12px;
+  line-height: 18px;
+  cursor: pointer;
+  transition: background 120ms ease, color 120ms ease, border-color 120ms ease;
+}
+
+.gmail-category-pill:hover {
+  background: var(--gm-bg-pill-hover);
+  color: var(--gm-text-strong);
+}
+
+.gmail-category-pill-active {
+  background: var(--gm-bg-row-selected);
+  border-color: var(--gm-accent);
+  color: var(--gm-text-strong);
+}
+
+.gmail-category-pill-count {
+  color: var(--gm-text-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.gmail-category-pill-archive {
+  margin-left: auto;
+  border-color: transparent;
+  background: var(--gm-bg-pill-hover);
+  color: var(--gm-text-strong);
+}
+
+.gmail-category-pill-archive:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+/* The category chip in the thread-detail toolbar is a button (dropdown trigger). */
+.gmail-category-chip {
+  flex-shrink: 0;
+  background: transparent;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 120ms ease, color 120ms ease;
+}
+
+.gmail-category-chip:hover {
+  background: var(--gm-bg-pill-hover);
+  color: var(--gm-text-strong);
+}
+
+.gmail-detail {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  background: transparent;
+}
+
+.gmail-detail-inline {
+  background: var(--gm-bg-card);
+  border-top: 1px solid var(--gm-border);
+  border-bottom: 1px solid var(--gm-border);
+  box-shadow: inset 2px 0 0 var(--gm-accent);
+  /* Replays whenever the detail is shown — hidden details are display: none,
+     so un-hiding restarts the animation. */
+  animation: gmail-detail-open 140ms ease-out;
+}
+
+.gmail-detail-hidden {
+  display: none;
+}
+
+@keyframes gmail-detail-open {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* The inline reply/forward composer pops in from below the thread. */
+.gmail-compose-inline {
+  animation: gmail-compose-open 140ms ease-out;
+}
+
+@keyframes gmail-compose-open {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gmail-detail-inline,
+  .gmail-compose-inline,
+  .gmail-row-group-leaving {
+    animation: none;
+  }
+}
+
+.gmail-detail-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  height: 48px;
+  padding: 0 24px;
+  border-bottom: 1px solid var(--gm-border);
+  background: transparent;
+}
+
+.gmail-thread-subject-inline {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--gm-text-strong);
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+
+.gmail-thread-body {
+  padding: 20px 24px 28px;
+  background: transparent;
+}
+
+.gmail-thread-summary {
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--gm-border);
+}
+
+.gmail-thread-summary-label {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--gm-text-faint);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.gmail-thread-summary-text {
+  display: block;
+  color: var(--gm-text);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.gmail-message-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.gmail-message {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  gap: 12px;
+  padding: 12px 0;
+  border-top: 1px solid var(--gm-border);
+}
+
+.gmail-message:first-child {
+  border-top: 0;
+  padding-top: 4px;
+}
+
+.gmail-message-header {
+  display: block;
+  width: 100%;
+  padding: 0;
+  margin: 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.gmail-message-snippet {
+  margin-top: 2px;
+  color: var(--gm-text-muted);
+  font-size: 12px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.gmail-message:not(.gmail-message-expanded) .gmail-message-header:hover .gmail-message-from strong {
+  color: var(--gm-accent);
+}
+
+.gmail-message-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  color: #fafafa;
+  font-weight: 600;
+  font-size: 11px;
+  letter-spacing: 0.02em;
+}
+
+.gmail-message-main {
+  min-width: 0;
+}
+
+.gmail-message-meta {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.gmail-message-from {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+}
+
+.gmail-message-from strong,
+.gmail-message-from span {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.gmail-message-from strong {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--gm-text-strong);
+  letter-spacing: -0.005em;
+}
+
+.gmail-message-from span,
+.gmail-message-to,
+.gmail-message-cc,
+.gmail-message-date {
+  color: var(--gm-text-muted);
+  font-size: 12px;
+}
+
+.gmail-message-date {
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.gmail-message-iframe {
+  display: block;
+  width: 100%;
+  max-width: 820px;
+  margin-top: 12px;
+  border: 0;
+  background: var(--gm-bg-iframe);
+  border-radius: 6px;
+}
+
+.gmail-message-iframe-adaptive {
+  background: var(--gm-bg-card);
+}
+
+.gmail-message-plain {
+  max-width: 820px;
+  margin-top: 12px;
+  padding: 10px 14px;
+  background: var(--gm-bg-iframe);
+  border-radius: 6px;
+  color: var(--gm-text);
+}
+
+.gmail-message-pre {
+  margin: 0;
+  font: 14px/1.6 Arial, sans-serif;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.gmail-message-pre-quoted {
+  margin-top: 12px;
+  color: var(--gm-text-muted);
+}
+
+.gmail-quote-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 8px;
+  height: 22px;
+  padding: 0 10px;
+  border: 1px solid var(--gm-border-strong);
+  border-radius: 4px;
+  background: var(--gm-bg-pill);
+  color: var(--gm-text-muted);
+  font: inherit;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: background 120ms ease, color 120ms ease, border-color 120ms ease;
+}
+
+.gmail-quote-toggle:hover {
+  background: var(--gm-bg-pill-hover);
+  color: var(--gm-text-strong);
+  border-color: var(--gm-border-strong);
+}
+
+.gmail-quote-toggle[aria-expanded="true"] {
+  background: var(--gm-bg-row-selected);
+  color: var(--gm-accent);
+  border-color: var(--gm-accent);
+}
+
+.gmail-message-attachments {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+  max-width: 820px;
+}
+
+.gmail-attachment {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 320px;
+  padding: 6px 10px;
+  border: 1px solid var(--gm-border-strong);
+  border-radius: 6px;
+  background: var(--gm-bg-pill);
+  color: var(--gm-text);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 120ms ease, border-color 120ms ease, color 120ms ease;
+}
+
+.gmail-attachment:hover {
+  background: var(--gm-bg-pill-hover);
+  border-color: var(--gm-accent);
+  color: var(--gm-accent);
+}
+
+.gmail-attachment-name {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-weight: 500;
+}
+
+.gmail-attachment-size {
+  flex-shrink: 0;
+  color: var(--gm-text-muted);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+.gmail-thread-actions {
+  display: flex;
+  gap: 8px;
+  margin: 20px 0 12px 40px;
+}
+
+.gmail-thread-actions button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 30px;
+  padding: 0 14px;
+  border: 1px solid var(--gm-border-strong);
+  border-radius: 6px;
+  background: var(--gm-bg-pill);
+  color: var(--gm-text-body);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 120ms ease, border-color 120ms ease;
+}
+
+.gmail-thread-actions button:hover {
+  background: var(--gm-bg-pill-hover);
+  border-color: var(--gm-border-strong);
+}
+
+/* Email composer body — Tiptap content, styled to the app's design system. */
+.compose-content {
+  outline: none;
+  min-height: 120px;
+  padding: 12px;
+  background: transparent;
+  color: var(--foreground);
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+
+.compose-content p {
+  margin: 0;
+}
+
+.compose-content p + p,
+.compose-content p + ul,
+.compose-content p + ol,
+.compose-content p + blockquote {
+  margin-top: 8px;
+}
+
+.compose-content ul,
+.compose-content ol {
+  margin: 0;
+  padding-left: 22px;
+}
+
+.compose-content ul {
+  list-style: disc;
+}
+
+.compose-content ol {
+  list-style: decimal;
+}
+
+.compose-content li {
+  margin: 2px 0;
+}
+
+.compose-content li > p {
+  margin: 0;
+}
+
+.compose-content blockquote {
+  margin: 4px 0;
+  padding-left: 12px;
+  border-left: 2px solid var(--border);
+  color: var(--muted-foreground);
+}
+
+.compose-content a {
+  color: var(--primary);
+  text-decoration: underline;
+}
+
+.compose-content code {
+  padding: 1px 4px;
+  border-radius: 3px;
+  background: var(--muted);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.8125rem;
+}
+
+.compose-content p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  color: var(--muted-foreground);
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
+
+.gmail-empty-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  min-height: 0;
+  background: transparent;
+  color: var(--gm-text-faint);
+  font-size: 13px;
+}
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 12px);
+  --radius-4xl: calc(var(--radius) + 16px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+:root {
+  --radius: 0.5rem;
+  --background: var(--bg-color, oklch(1 0 0));
+  --foreground: var(--text-color, oklch(0.145 0 0));
+  --card: var(--bg-color, oklch(1 0 0));
+  --card-foreground: var(--text-color, oklch(0.145 0 0));
+  --popover: var(--bg-color, oklch(1 0 0));
+  --popover-foreground: var(--text-color, oklch(0.145 0 0));
+  --primary: var(--main-color, oklch(0.205 0 0));
+  --primary-foreground: var(--bg-color, oklch(0.985 0 0));
+  --secondary: var(--sub-alt-color, oklch(0.97 0 0));
+  --secondary-foreground: var(--text-color, oklch(0.205 0 0));
+  --muted: var(--sub-alt-color, oklch(0.97 0 0));
+  --muted-foreground: var(--sub-color, oklch(0.556 0 0));
+  --accent: var(--sub-color, oklch(0.97 0 0));
+  --accent-foreground: var(--text-color, oklch(0.205 0 0));
+  --destructive: var(--error-color, oklch(0.577 0.245 27.325));
+  --border: var(--sub-alt-color, oklch(0.922 0 0));
+  --input: var(--sub-alt-color, oklch(0.922 0 0));
+  --ring: var(--main-color, oklch(0.708 0 0));
+  --chart-1: oklch(0.646 0.222 41.116);
+  --chart-2: oklch(0.6 0.118 184.704);
+  --chart-3: oklch(0.398 0.07 227.392);
+  --chart-4: oklch(0.828 0.189 84.429);
+  --chart-5: oklch(0.769 0.188 70.08);
+  --sidebar: var(--bg-color, oklch(0.985 0 0));
+  --sidebar-foreground: var(--text-color, oklch(0.145 0 0));
+  --sidebar-primary: var(--main-color, oklch(0.205 0 0));
+  --sidebar-primary-foreground: var(--bg-color, oklch(0.985 0 0));
+  --sidebar-accent: var(--sub-color, oklch(0.9 0 0));
+  --sidebar-accent-foreground: var(--text-color, oklch(0.205 0 0));
+  --sidebar-border: var(--sub-alt-color, oklch(0.922 0 0));
+  --sidebar-ring: var(--main-color, oklch(0.708 0 0));
+  --scrollbar-track: oklch(0.95 0 0);
+  --scrollbar-thumb: oklch(0.75 0 0);
+  --scrollbar-thumb-hover: oklch(0.65 0 0);
+  /* Subtle raised-card surface: tints toward foreground, so it reads a hair
+     darker than the background in light mode and a hair lighter in dark mode.
+     Shared by the web search card and tool-call group. */
+  --card-surface: color-mix(in oklab, var(--background) 98.5%, var(--foreground));
+  --crabapple-panel: oklch(0.97 0 0);
+  --crabapple-raised: oklch(1 0 0);
+  --crabapple-wash: color-mix(in oklab, var(--background) 88%, var(--primary) 12%);
+  --crabapple-hairline: color-mix(in oklab, var(--border) 78%, var(--foreground) 22%);
+  --crabapple-command: oklch(0.205 0 0);
+  --crabapple-attention: oklch(0.646 0.222 41.116);
+  --crabapple-shadow: 0 1px 2px rgb(31 38 48 / 0.07), 0 18px 40px rgb(31 38 48 / 0.08);
+  --crabapple-shadow-soft: 0 1px 2px rgb(31 38 48 / 0.05), 0 8px 24px rgb(31 38 48 / 0.06);
+}
+
+.dark {
+  --background: var(--bg-color, oklch(0.145 0 0));
+  --foreground: var(--text-color, oklch(0.985 0 0));
+  --card: var(--bg-color, oklch(0.205 0 0));
+  --card-foreground: var(--text-color, oklch(0.985 0 0));
+  --popover: var(--bg-color, oklch(0.205 0 0));
+  --popover-foreground: var(--text-color, oklch(0.985 0 0));
+  --primary: var(--main-color, oklch(0.922 0 0));
+  --primary-foreground: var(--bg-color, oklch(0.205 0 0));
+  --secondary: var(--sub-alt-color, oklch(0.269 0 0));
+  --secondary-foreground: var(--text-color, oklch(0.985 0 0));
+  --muted: var(--sub-alt-color, oklch(0.269 0 0));
+  --muted-foreground: var(--sub-color, oklch(0.708 0 0));
+  --accent: var(--sub-color, oklch(0.269 0 0));
+  --accent-foreground: var(--text-color, oklch(0.985 0 0));
+  --destructive: var(--error-color, oklch(0.704 0.191 22.216));
+  --border: var(--sub-alt-color, oklch(1 0 0 / 10%));
+  --input: var(--sub-alt-color, oklch(1 0 0 / 15%));
+  --ring: var(--main-color, oklch(0.556 0 0));
+  --chart-1: oklch(0.488 0.243 264.376);
+  --chart-2: oklch(0.696 0.17 162.48);
+  --chart-3: oklch(0.769 0.188 70.08);
+  --chart-4: oklch(0.627 0.265 303.9);
+  --chart-5: oklch(0.645 0.246 16.439);
+  --sidebar: var(--bg-color, oklch(0.205 0 0));
+  --sidebar-foreground: var(--text-color, oklch(0.985 0 0));
+  --sidebar-primary: var(--main-color, oklch(0.488 0.243 264.376));
+  --sidebar-primary-foreground: var(--bg-color, oklch(0.985 0 0));
+  --sidebar-accent: var(--sub-color, oklch(0.35 0 0));
+  --sidebar-accent-foreground: var(--text-color, oklch(0.985 0 0));
+  --sidebar-border: var(--sub-alt-color, oklch(1 0 0 / 10%));
+  --sidebar-ring: var(--main-color, oklch(0.556 0 0));
+  --scrollbar-track: oklch(0.2 0 0);
+  --scrollbar-thumb: oklch(0.4 0 0);
+  --scrollbar-thumb-hover: oklch(0.5 0 0);
+  --crabapple-panel: oklch(0.269 0 0);
+  --crabapple-raised: oklch(0.205 0 0);
+  --crabapple-wash: color-mix(in oklab, var(--background) 80%, var(--primary) 20%);
+  --crabapple-hairline: color-mix(in oklab, var(--border) 70%, var(--foreground) 30%);
+  --crabapple-command: oklch(0.922 0 0);
+  --crabapple-attention: oklch(0.769 0.188 70.08);
+  --crabapple-shadow: 0 1px 2px rgb(0 0 0 / 0.24), 0 22px 44px rgb(0 0 0 / 0.28);
+  --crabapple-shadow-soft: 0 1px 2px rgb(0 0 0 / 0.2), 0 12px 28px rgb(0 0 0 / 0.18);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+    scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+    scrollbar-width: thin;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    text-rendering: optimizeLegibility;
+  }
+
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: var(--scrollbar-track);
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: var(--scrollbar-thumb);
+    border-radius: 4px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--scrollbar-thumb-hover);
+  }
+}
+
+.crabapple-shell {
+  background: var(--background);
+}
+
+.crabapple-sidebar [data-sidebar="sidebar"] {
+  background: var(--sidebar);
+  border-right: 1px solid var(--sidebar-border);
+}
+
+.crabapple-sidebar [data-sidebar="header"] {
+  gap: 0.625rem;
+  border-bottom: 1px solid color-mix(in oklab, var(--sidebar-border) 76%, transparent);
+  background: var(--sidebar);
+}
+
+.crabapple-section-switcher {
+  border: 1px solid color-mix(in oklab, var(--sidebar-border) 78%, transparent);
+  background: color-mix(in oklab, var(--sidebar-accent) 58%, var(--sidebar) 42%);
+  box-shadow: inset 0 1px 0 color-mix(in oklab, var(--foreground) 9%, transparent);
+}
+
+.crabapple-section-switcher button {
+  letter-spacing: 0;
+}
+
+.crabapple-section-switcher button[class*="shadow-sm"] {
+  background: var(--crabapple-raised);
+  box-shadow: var(--crabapple-shadow-soft);
+}
+
+.crabapple-quick-actions button {
+  min-height: 2rem;
+}
+
+.crabapple-quick-actions button svg {
+  color: color-mix(in oklab, var(--crabapple-command) 72%, var(--sidebar-foreground) 28%);
+}
+
+.crabapple-tabbar {
+  background: color-mix(in oklab, var(--background) 78%, var(--muted) 22%);
+}
+
+.crabapple-titlebar {
+  background: var(--background);
+  border-bottom-color: color-mix(in oklab, var(--border) 82%, transparent);
+}
+
+.crabapple-tab {
+  min-height: 2.5rem;
+  border-bottom: 1px solid transparent;
+}
+
+.crabapple-tab[class*="bg-background"] {
+  border-bottom-color: var(--primary);
+  background: var(--crabapple-raised);
+  box-shadow: inset 0 1px 0 color-mix(in oklab, var(--foreground) 8%, transparent);
+}
+
+.crabapple-composer-dock {
+  box-shadow: 0 -20px 44px color-mix(in oklab, var(--background) 78%, transparent);
+}
+
+.crabapple-chat-input {
+  border-color: color-mix(in oklab, var(--border) 74%, var(--primary) 26%);
+  background: var(--crabapple-raised);
+  box-shadow: var(--crabapple-shadow);
+}
+
+.crabapple-chat-input:focus-within {
+  border-color: color-mix(in oklab, var(--ring) 76%, var(--border) 24%);
+  box-shadow:
+    0 0 0 1px color-mix(in oklab, var(--ring) 38%, transparent),
+    var(--crabapple-shadow);
+}
+
+.dark .crabapple-code-chat-input {
+  border-color: color-mix(in oklab, var(--border) 76%, transparent);
+  background: #000000;
+  box-shadow: none;
+}
+
+.dark .crabapple-code-chat-input:focus-within {
+  border-color: color-mix(in oklab, var(--ring) 70%, var(--border) 30%);
+  box-shadow: 0 0 0 1px color-mix(in oklab, var(--ring) 30%, transparent);
+}
+
+[data-slot="message-content"] {
+  line-height: 1.62;
+}
+
+.is-user [data-slot="message-content"] {
+  background: color-mix(in oklab, var(--secondary) 88%, var(--crabapple-wash) 12%);
+  border: 1px solid color-mix(in oklab, var(--border) 68%, transparent);
+}
+
+.is-assistant [data-slot="message-content"] {
+  color: color-mix(in oklab, var(--foreground) 94%, var(--muted-foreground) 6%);
+}
+
+/* Markdown content base styles for Streamdown/MessageResponse */
+@layer components {
+  /* Target elements inside MessageResponse wrapper */
+  [data-slot="message-content"] ul,
+  [data-slot="message-content"] ol {
+    @apply my-2 pl-5;
+  }
+  [data-slot="message-content"] ul {
+    @apply list-disc;
+  }
+  [data-slot="message-content"] ol {
+    @apply list-decimal;
+  }
+  [data-slot="message-content"] li {
+    @apply my-1;
+  }
+  [data-slot="message-content"] p {
+    @apply my-2 first:mt-0 last:mb-0;
+  }
+  [data-slot="message-content"] h1 {
+    @apply my-4 text-2xl font-bold first:mt-0;
+  }
+  [data-slot="message-content"] h2 {
+    @apply my-3 text-xl font-semibold first:mt-0;
+  }
+  [data-slot="message-content"] h3 {
+    @apply my-3 text-lg font-semibold first:mt-0;
+  }
+  [data-slot="message-content"] h4,
+  [data-slot="message-content"] h5,
+  [data-slot="message-content"] h6 {
+    @apply my-2 font-semibold first:mt-0;
+  }
+  [data-slot="message-content"] code:not(pre code) {
+    @apply rounded bg-muted px-1.5 py-0.5 font-mono text-sm;
+  }
+  [data-slot="message-content"] pre {
+    @apply my-3 overflow-x-auto rounded-lg;
+  }
+  [data-slot="message-content"] blockquote {
+    @apply my-3 border-l-4 border-border pl-4 italic text-muted-foreground;
+  }
+  [data-slot="message-content"] hr {
+    @apply my-4 border-border;
+  }
+  [data-slot="message-content"] a {
+    @apply text-primary underline underline-offset-2 hover:text-primary/80;
+  }
+  [data-slot="message-content"] table {
+    @apply my-3 w-full border-collapse;
+  }
+  [data-slot="message-content"] th,
+  [data-slot="message-content"] td {
+    @apply border border-border px-3 py-2 text-left;
+  }
+  [data-slot="message-content"] th {
+    @apply bg-muted font-semibold;
+  }
+}
+
+/* Titlebar drag regions for frameless window */
+.titlebar-drag-region {
+  -webkit-app-region: drag;
+}
+
+.titlebar-no-drag {
+  -webkit-app-region: no-drag;
+}
+
+.graph-view {
+  background-color: #f8f8f9;
+  user-select: none;
+}
+
+.dark .graph-view {
+  background-color: #0b0b0d;
+}
+
+.graph-view::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(#1f2937 1px, transparent 1px);
+  background-size: 40px 40px;
+  opacity: 1;
+  pointer-events: none;
+}
+
+.graph-view > svg {
+  position: relative;
+  z-index: 1;
+  cursor: grab;
+}
+
+.graph-view:active > svg {
+  cursor: grabbing;
+}
+
+.graph-view text {
+  pointer-events: none;
+  user-select: none;
+}
+
+/* Upgrade button: grainy gradient sweep on hover */
+.upgrade-btn {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.upgrade-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.25'/%3E%3C/svg%3E"),
+    linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(168, 85, 247, 0.35) 20%,
+      rgba(236, 72, 153, 0.4) 40%,
+      rgba(251, 146, 60, 0.35) 60%,
+      rgba(168, 85, 247, 0.3) 80%,
+      transparent 100%
+    );
+  background-size: 100px 100px, 100% 100%;
+  transform: translateX(-120%);
+  opacity: 0;
+  z-index: 1;
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+.upgrade-btn:hover::before {
+  animation: grain-sweep 2.4s ease-in-out infinite;
+}
+
+@keyframes grain-sweep {
+  0% {
+    opacity: 1;
+    transform: translateX(-120%);
+  }
+  45% {
+    opacity: 1;
+    transform: translateX(120%);
+  }
+  55% {
+    opacity: 1;
+    transform: translateX(120%);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(-120%);
+  }
+}
+
+/* Issue #749: BiDi. unicode-bidi:plaintext resolves direction PER BLOCK from
+   its first strong character, so a message mixing English + RTL paragraphs
+   aligns each block correctly. text-align:start follows the resolved dir. */
+.bidi-auto :is(p,h1,h2,h3,h4,h5,h6,li,blockquote,td,th){unicode-bidi:plaintext;text-align:start;}
+/* Code is inherently LTR — keep it stable inside RTL messages. */
+.bidi-auto :is(pre,code,kbd,samp){direction:ltr;unicode-bidi:isolate;text-align:left;}
+
+/* Turn usage footer (token menu + effort label): hidden until the turn is
+   hovered. `*:hover + …` reveals it when the element directly above it — the
+   turn's last message — is hovered; the :has() keeps it pinned while its
+   dropdown is open. */
+[data-turn-usage] {
+  opacity: 0;
+  transition: opacity 0.15s ease-out;
+}
+[data-turn-usage]:hover,
+[data-turn-usage]:focus-within,
+[data-turn-usage]:has([data-state="open"]),
+*:hover + [data-turn-usage] {
+  opacity: 1;
+}

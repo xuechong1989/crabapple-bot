@@ -1,0 +1,41 @@
+logs/
+tmp/
+temp/
+dist/
+venv/
+node_modules/
+target/
+__pycache__/
+*.egg-info/
+.venv/
+.vscode/
+.idea/
+
+# JWT secret (auto-generated, do not commit)
+.jwt_secret
+
+# Browser agent test screenshots (should never be in root)
+/test_*.png
+/test_*.jpg
+/_test_*
+
+# 本地配置与密钥材料，禁止入库
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.keystore
+.pnpm-store/
+
+
+Thumbs.db
+desktop.ini
+.DS_Store
+*.swp
+*.swo
+*.log
+~$*
