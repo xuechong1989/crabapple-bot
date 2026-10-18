@@ -14,11 +14,14 @@
     </linearGradient>
   </defs>
   <rect width="512" height="512" rx="112" fill="url(#bg)"/>
-  <path d="M 392 112 C 402 70 438 44 474 48 C 470 88 442 116 400 120 C 414 104 426 88 436 72 C 422 82 406 94 392 112 Z" fill="#4F9D69"/>
-  <path d="M 398 116 C 418 102 438 86 454 66" fill="none" stroke="#2F6F49" stroke-width="8" stroke-linecap="round"/>
   <path d="M 256 186 C 238 154 198 152 178 182 C 158 212 162 262 184 312 C 204 358 230 390 256 404 C 282 390 308 358 328 312 C 350 262 354 212 334 182 C 314 152 274 154 256 186 Z" fill="url(#paper)"/>
-  <path d="M 256 186 C 252 158 258 136 274 120" fill="none" stroke="#2F6F49" stroke-width="14" stroke-linecap="round"/>
-  <circle cx="216" cy="258" r="20" fill="#B3123B"/>
-  <circle cx="296" cy="258" r="20" fill="#B3123B"/>
-  <rect x="226" y="310" width="60" height="16" rx="8" fill="#B3123B"/>
+  <path d="M 256 186 C 256 164 256 148 256 134" fill="none" stroke="#B3123B" stroke-width="14" stroke-linecap="round"/>
+  <circle cx="256" cy="122" r="14" fill="#E63B5F"/>
+  <circle cx="216" cy="252" r="17" fill="#B3123B"/>
+  <circle cx="296" cy="252" r="17" fill="#B3123B"/>
+  <circle cx="216" cy="248" r="5" fill="#FFFFFF"/>
+  <circle cx="296" cy="248" r="5" fill="#FFFFFF"/>
+  <path d="M 220 310 C 236 338 276 338 292 310" fill="none" stroke="#B3123B" stroke-width="14" stroke-linecap="round"/>
+  <circle cx="180" cy="286" r="13" fill="#FFB3C1"/>
+  <circle cx="332" cy="286" r="13" fill="#FFB3C1"/>
 </svg>
