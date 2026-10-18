@@ -1,15 +1,24 @@
 <svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <linearGradient id="crabapple-bg" x1="64" y1="64" x2="448" y2="448" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#2563EB"/>
-      <stop offset="1" stop-color="#06B6D4"/>
+    <linearGradient id="bg" x1="64" y1="64" x2="448" y2="448" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#B3123B"/>
+      <stop offset="1" stop-color="#E63B5F"/>
+    </linearGradient>
+    <linearGradient id="paper" x1="128" y1="108" x2="384" y2="420" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#FFF0F2"/>
+    </linearGradient>
+    <linearGradient id="paperDeep" x1="128" y1="108" x2="384" y2="420" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFF4F2"/>
+      <stop offset="1" stop-color="#FFDDE3"/>
     </linearGradient>
   </defs>
-  <rect width="512" height="512" rx="112" fill="url(#crabapple-bg)"/>
-  <rect x="250" y="140" width="12" height="46" rx="6" fill="#FFFFFF"/>
-  <circle cx="256" cy="128" r="15" fill="#FFFFFF"/>
-  <rect x="152" y="172" width="208" height="160" rx="46" fill="#FFFFFF"/>
-  <circle cx="216" cy="242" r="20" fill="url(#crabapple-bg)"/>
-  <circle cx="296" cy="242" r="20" fill="url(#crabapple-bg)"/>
-  <rect x="222" y="284" width="68" height="14" rx="7" fill="url(#crabapple-bg)"/>
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+  <path d="M 392 112 C 402 70 438 44 474 48 C 470 88 442 116 400 120 C 414 104 426 88 436 72 C 422 82 406 94 392 112 Z" fill="#4F9D69"/>
+  <path d="M 398 116 C 418 102 438 86 454 66" fill="none" stroke="#2F6F49" stroke-width="8" stroke-linecap="round"/>
+  <path d="M 256 186 C 238 154 198 152 178 182 C 158 212 162 262 184 312 C 204 358 230 390 256 404 C 282 390 308 358 328 312 C 350 262 354 212 334 182 C 314 152 274 154 256 186 Z" fill="url(#paper)"/>
+  <path d="M 256 186 C 252 158 258 136 274 120" fill="none" stroke="#2F6F49" stroke-width="14" stroke-linecap="round"/>
+  <circle cx="216" cy="258" r="20" fill="#B3123B"/>
+  <circle cx="296" cy="258" r="20" fill="#B3123B"/>
+  <rect x="226" y="310" width="60" height="16" rx="8" fill="#B3123B"/>
 </svg>

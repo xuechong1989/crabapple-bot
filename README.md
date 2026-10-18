@@ -1,5 +1,7 @@
 # Crabapple Bot · 海棠数字员工
 
+> 品牌色：海棠红 `#B3123B` · 海棠粉 `#E63B5F` · 叶绿 `#4F9D69`
+
 本地优先的桌面 AI 助手：把邮件、会议、笔记与助理对话索引成可持续生长的知识图谱（Obsidian 风格双向链接），并基于长期记忆在电脑上完成工作。
 
 <p align="center"><img src="apps/x/apps/main/icons/icon.png" width="96" height="96" alt="Crabapple Bot" /></p>
