@@ -28,6 +28,8 @@ overrides:
   "@xmldom/xmldom": 0.9.12
   tar: 7.5.21
   shell-quote: 1.9.0
+  prosemirror-model: 1.25.12
+  prosemirror-view: 1.42.3
 
 # langium imports vscode-jsonrpc/lib/common/events.js but doesn't declare the
 # dependency (it only gets it transitively via vscode-languageserver), which
