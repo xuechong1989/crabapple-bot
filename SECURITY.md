@@ -25,6 +25,10 @@ Crabapple Bot 是本地优先的桌面应用，会接触以下敏感能力，相
 
 - `@e965/xlsx` 0.20.3（Apache-2.0）用于替代 npm 上停留在 0.18.5 的 `xlsx`，规避其已知原型污染/ReDoS 问题。
 - `baileys` 目前为 `7.0.0-rc14` 预发布版本；上游尚无稳定的 7.x 正式版，升级时请重点回归 WhatsApp 连接与消息收发链路。
+- 已通过 `apps/x/pnpm-workspace.yaml` 的 overrides 修复 `proxy-addr`、`axios`、`fast-uri`、`undici`、`sharp`、`source-map-js` 等可兼容升级的传递依赖。
+- 仍需关注：Electron 39.x 的多项 high 安全公告要求升级到 41.10.6，这属于 Electron 主版本升级，需要完整回归内置浏览器、sandbox、preload 与打包流程，未在本次维护中强制升级。
+- `electron-forge`/`node-gyp` 构建链中的 `tar` 仍有 critical 公告（修复版本 7.5.21），属于构建期依赖；正式构建环境应限制不可信归档输入，并优先安排升级。
+- 其余传递依赖告警以 GitHub Security 页的 Dependabot 列表为准；不要为了清零告警盲目跨主版本升级。
 
 ## 处理流程
 
