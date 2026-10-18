@@ -26,6 +26,8 @@ overrides:
   sharp: 0.35.5
   source-map-js: 1.2.2
   "@xmldom/xmldom": 0.9.12
+  tar: 7.5.21
+  shell-quote: 1.9.0
 
 # langium imports vscode-jsonrpc/lib/common/events.js but doesn't declare the
 # dependency (it only gets it transitively via vscode-languageserver), which
