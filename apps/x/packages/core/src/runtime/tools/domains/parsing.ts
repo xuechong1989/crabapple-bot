@@ -88,7 +88,7 @@ export const parsingTools: z.infer<typeof BuiltinToolsSchema> = {
                 }
 
                 if (ext === '.xlsx' || ext === '.xls') {
-                    const XLSX = await _importDynamic("xlsx");
+                    const XLSX = await _importDynamic("@e965/xlsx");
                     const workbook = XLSX.read(buffer, { type: 'buffer' });
                     const sheets: Record<string, string> = {};
                     for (const sheetName of workbook.SheetNames) {
