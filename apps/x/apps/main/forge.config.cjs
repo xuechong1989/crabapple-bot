@@ -288,7 +288,7 @@ module.exports = {
                 loadingGif: path.join(__dirname, 'icons/install-loading.gif'),
                 // Add/Remove Programs icon. Must be a remote URL (Squirrel
                 // limitation); defaults to the Atom feather otherwise.
-                iconUrl: 'https://raw.githubusercontent.com/YOUR_GITHUB_USERNAME/crabapple-bot/main/apps/x/apps/main/icons/icon.ico',
+                iconUrl: 'https://raw.githubusercontent.com/xuechong1989/crabapple-bot/main/apps/x/apps/main/icons/icon.ico',
                 // Skip the machine-wide MSI deployment stub — it lands on the
                 // GitHub release page next to setup.exe and users grab the
                 // wrong one (it neither launches the app nor auto-updates).
@@ -306,7 +306,7 @@ module.exports = {
                     bin: "crabapple-bot",
                     description: 'Crabapple Bot — AI digital coworker with memory',
                     maintainer: 'crabapple',
-                    homepage: 'https://github.com/YOUR_GITHUB_USERNAME/crabapple-bot',
+                    homepage: 'https://github.com/xuechong1989/crabapple-bot',
                     icon: path.join(__dirname, 'icons/icon.png'),
                     mimeType: ['x-scheme-handler/crabapple'],
                 }
@@ -319,7 +319,7 @@ module.exports = {
                     name: `crabapple-bot-linux`,
                     bin: "crabapple-bot",
                     description: 'Crabapple Bot — AI digital coworker with memory',
-                    homepage: 'https://github.com/YOUR_GITHUB_USERNAME/crabapple-bot',
+                    homepage: 'https://github.com/xuechong1989/crabapple-bot',
                     icon: path.join(__dirname, 'icons/icon.png'),
                     mimeType: ['x-scheme-handler/crabapple'],
                 }
@@ -335,7 +335,7 @@ module.exports = {
                 executableName: 'crabapple-bot',
                 description: 'Crabapple Bot — AI digital coworker with memory',
                 maintainer: 'crabapple',
-                homepage: 'https://github.com/YOUR_GITHUB_USERNAME/crabapple-bot',
+                homepage: 'https://github.com/xuechong1989/crabapple-bot',
                 license: 'Apache',
                 icon: path.join(__dirname, 'icons/icon.png'),
                 mimeType: ['x-scheme-handler/crabapple'],
@@ -351,7 +351,7 @@ module.exports = {
             name: '@electron-forge/publisher-github',
             config: {
                 repository: {
-                    owner: 'YOUR_GITHUB_USERNAME',
+                    owner: 'xuechong1989',
                     name: 'crabapple-bot'
                 },
                 prerelease: true
