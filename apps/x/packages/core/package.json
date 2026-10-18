@@ -36,7 +36,7 @@
     "cors": "^2.8.6",
     "cron-parser": "^5.5.0",
     "express": "^5.2.1",
-    "glob": "^13.0.0",
+    "glob": "^13.0.6",
     "google-auth-library": "^10.5.0",
     "googleapis": "^169.0.0",
     "isomorphic-git": "^1.29.0",
