@@ -11,7 +11,7 @@
     "electron-chrome-extensions": "^4.9.0"
   },
   "devDependencies": {
-    "electron": "^39.2.7",
+    "electron": "^42.11.16",
     "esbuild": "^0.24.2"
   }
 }
