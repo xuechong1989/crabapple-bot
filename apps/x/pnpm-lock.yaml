@@ -65,7 +65,7 @@ importers:
     dependencies:
       '@agentclientprotocol/claude-agent-acp':
         specifier: ^0.55.0
-        version: 0.55.0(@anthropic-ai/sdk@0.100.1(zod@4.2.1))(@modelcontextprotocol/sdk@1.31.0(supports-color@8.1.1)(zod@4.2.1))
+        version: 0.55.0(@anthropic-ai/sdk@0.100.1(zod@4.6.6))(@modelcontextprotocol/sdk@1.31.0(supports-color@8.1.1)(zod@4.6.6))
       '@agentclientprotocol/codex-acp':
         specifier: ^1.1.0
         version: 1.1.0
@@ -109,8 +109,8 @@ importers:
         specifier: ^1.5.5
         version: 1.5.5
       zod:
-        specifier: ^4.2.1
-        version: 4.2.1
+        specifier: ^4.6.6
+        version: 4.6.6
     devDependencies:
       '@electron-forge/cli':
         specifier: ^7.10.2
@@ -187,7 +187,7 @@ importers:
         version: 6.43.1
       '@eigenpal/docx-editor-react':
         specifier: ^1.0.3
-        version: 1.0.3(@types/react-dom@19.2.3(@types/react@19.2.7))(@types/react@19.2.7)(ai@7.0.22(zod@4.2.1))(prosemirror-commands@1.7.1)(prosemirror-dropcursor@1.8.2)(prosemirror-history@1.5.0)(prosemirror-keymap@1.2.3)(prosemirror-model@1.25.12)(prosemirror-state@1.4.4)(prosemirror-tables@1.8.5)(prosemirror-transform@1.12.0)(prosemirror-view@1.42.3)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+        version: 1.0.3(@types/react-dom@19.2.3(@types/react@19.2.7))(@types/react@19.2.7)(ai@7.0.22(zod@4.6.6))(prosemirror-commands@1.7.1)(prosemirror-dropcursor@1.8.2)(prosemirror-history@1.5.0)(prosemirror-keymap@1.2.3)(prosemirror-model@1.25.12)(prosemirror-state@1.4.4)(prosemirror-tables@1.8.5)(prosemirror-transform@1.12.0)(prosemirror-view@1.42.3)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       '@lezer/highlight':
         specifier: ^1.2.3
         version: 1.2.3
@@ -283,7 +283,7 @@ importers:
         version: 6.0.0
       ai:
         specifier: ^7.0.22
-        version: 7.0.22(zod@4.2.1)
+        version: 7.0.22(zod@4.6.6)
       class-variance-authority:
         specifier: ^0.7.1
         version: 0.7.1
@@ -387,8 +387,8 @@ importers:
         specifier: ^2.8.2
         version: 2.8.2
       zod:
-        specifier: ^4.2.1
-        version: 4.2.1
+        specifier: ^4.6.6
+        version: 4.6.6
     devDependencies:
       '@eslint/js':
         specifier: ^9.39.1
@@ -449,31 +449,31 @@ importers:
     dependencies:
       '@agentclientprotocol/claude-agent-acp':
         specifier: ^0.55.0
-        version: 0.55.0(@anthropic-ai/sdk@0.100.1(zod@4.2.1))(@modelcontextprotocol/sdk@1.31.0(supports-color@8.1.1)(zod@4.2.1))
+        version: 0.55.0(@anthropic-ai/sdk@0.100.1(zod@4.6.6))(@modelcontextprotocol/sdk@1.31.0(supports-color@8.1.1)(zod@4.6.6))
       '@agentclientprotocol/codex-acp':
         specifier: ^1.1.0
         version: 1.1.0
       '@agentclientprotocol/sdk':
         specifier: ^1.1.0
-        version: 1.1.0(zod@4.2.1)
+        version: 1.1.0(zod@4.6.6)
       '@ai-sdk/anthropic':
         specifier: ^4.0.12
-        version: 4.0.12(zod@4.2.1)
+        version: 4.0.12(zod@4.6.6)
       '@ai-sdk/google':
         specifier: ^4.0.12
-        version: 4.0.12(zod@4.2.1)
+        version: 4.0.12(zod@4.6.6)
       '@ai-sdk/openai':
         specifier: ^4.0.11
-        version: 4.0.11(zod@4.2.1)
+        version: 4.0.11(zod@4.6.6)
       '@ai-sdk/openai-compatible':
         specifier: ^3.0.7
-        version: 3.0.7(zod@4.2.1)
+        version: 3.0.7(zod@4.6.6)
       '@ai-sdk/provider':
         specifier: ^4.0.3
         version: 4.0.3
       '@composio/core':
         specifier: ^0.6.0
-        version: 0.6.2(ws@8.21.0)(zod@4.2.1)
+        version: 0.6.2(ws@8.21.0)(zod@4.6.6)
       '@e965/xlsx':
         specifier: ^0.20.3
         version: 0.20.3
@@ -482,10 +482,10 @@ importers:
         version: 3.0.1(encoding@0.1.13)(supports-color@8.1.1)
       '@modelcontextprotocol/sdk':
         specifier: ^1.31.0
-        version: 1.31.0(supports-color@8.1.1)(zod@4.2.1)
+        version: 1.31.0(supports-color@8.1.1)(zod@4.6.6)
       '@openrouter/ai-sdk-provider':
         specifier: ^3.0.0
-        version: 3.0.0(ai@7.0.22(zod@4.2.1))(zod@4.2.1)
+        version: 3.0.0(ai@7.0.22(zod@4.6.6))(zod@4.6.6)
       '@react-pdf/renderer':
         specifier: ^4.3.2
         version: 4.3.2(react@19.2.3)
@@ -497,7 +497,7 @@ importers:
         version: link:../shared
       ai:
         specifier: ^7.0.22
-        version: 7.0.22(zod@4.2.1)
+        version: 7.0.22(zod@4.6.6)
       awilix:
         specifier: ^12.0.5
         version: 12.0.5
@@ -536,7 +536,7 @@ importers:
         version: 2.0.0
       ollama-ai-provider-v2:
         specifier: ^4.0.1
-        version: 4.0.1(ai@7.0.22(zod@4.2.1))(zod@4.2.1)
+        version: 4.0.1(ai@7.0.22(zod@4.6.6))(zod@4.6.6)
       openid-client:
         specifier: ^6.8.1
         version: 6.8.1
@@ -565,8 +565,8 @@ importers:
         specifier: ^3.3.1
         version: 3.3.1
       zod:
-        specifier: ^4.2.1
-        version: 4.2.1
+        specifier: ^4.6.6
+        version: 4.6.6
     devDependencies:
       '@types/cors':
         specifier: ^2.8.19
@@ -599,8 +599,8 @@ importers:
   packages/shared:
     dependencies:
       zod:
-        specifier: ^4.2.1
-        version: 4.2.1
+        specifier: ^4.6.6
+        version: 4.6.6
     devDependencies:
       vitest:
         specifier: 'catalog:'
@@ -2464,6 +2464,7 @@ packages:
   '@opentelemetry/sdk-trace-base@2.2.0':
     resolution: {integrity: sha512-xWQgL0Bmctsalg6PaXExmzdedSp3gyKV8mQBwK/j9VGdCDu2fmXIb2gAehBKbkXCpJ4HPkgv3QfoJWRT4dHWbw==}
     engines: {node: ^18.19.0 || >=20.6.0}
+    deprecated: Use @opentelemetry/sdk-trace package
     peerDependencies:
       '@opentelemetry/api': '>=1.3.0 <1.10.0'
 
@@ -9238,11 +9239,8 @@ packages:
     peerDependencies:
       zod: ^3.25.0 || ^4.0.0
 
-  zod@4.2.1:
-    resolution: {integrity: sha512-0wZ1IRqGGhMP76gLqz8EyfBXKk0J2qo2+H3fi4mcUP/KtTocoX08nmIAHl1Z2kJIZbZee8KOpBCSNPRgauucjw==}
-
-  zod@4.4.3:
-    resolution: {integrity: sha512-ytENFjIJFl2UwYglde2jchW2Hwm4GJFLDiSXWdTrJQBIN9Fcyp7n4DhxJEiWNAJMV1/BqWfW/kkg71UDcHJyTQ==}
+  zod@4.6.6:
+    resolution: {integrity: sha512-4UmzQUF5fxvfcYHlbjBmejU+w+hbDnWFx4aS8kBx7nPBHcO2SqPbpAG8snbdg+Xse4pRefR98hgjFgIMCI/UhA==}
 
   zwitch@2.0.4:
     resolution: {integrity: sha512-bXE4cR/kVZhKZX/RjPEflHaKVhUVl85noU3v6b8apfQEc1x4A+zBxjZ4lN8LqGd6WZ3dl98pY4o717VFmoPp+A==}
@@ -9251,70 +9249,66 @@ snapshots:
 
   '@adobe/css-tools@4.5.0': {}
 
-  '@agentclientprotocol/claude-agent-acp@0.55.0(@anthropic-ai/sdk@0.100.1(zod@4.2.1))(@modelcontextprotocol/sdk@1.31.0(supports-color@8.1.1)(zod@4.2.1))':
+  '@agentclientprotocol/claude-agent-acp@0.55.0(@anthropic-ai/sdk@0.100.1(zod@4.6.6))(@modelcontextprotocol/sdk@1.31.0(supports-color@8.1.1)(zod@4.6.6))':
     dependencies:
-      '@agentclientprotocol/sdk': 1.1.0(zod@4.4.3)
-      '@anthropic-ai/claude-agent-sdk': 0.3.198(@anthropic-ai/sdk@0.100.1(zod@4.2.1))(@modelcontextprotocol/sdk@1.31.0(supports-color@8.1.1)(zod@4.2.1))(zod@4.4.3)
-      zod: 4.4.3
+      '@agentclientprotocol/sdk': 1.1.0(zod@4.6.6)
+      '@anthropic-ai/claude-agent-sdk': 0.3.198(@anthropic-ai/sdk@0.100.1(zod@4.6.6))(@modelcontextprotocol/sdk@1.31.0(supports-color@8.1.1)(zod@4.6.6))(zod@4.6.6)
+      zod: 4.6.6
     transitivePeerDependencies:
       - '@anthropic-ai/sdk'
       - '@modelcontextprotocol/sdk'
 
   '@agentclientprotocol/codex-acp@1.1.0':
     dependencies:
-      '@agentclientprotocol/sdk': 1.1.0(zod@4.4.3)
+      '@agentclientprotocol/sdk': 1.1.0(zod@4.6.6)
       '@openai/codex': 0.142.5
       diff: 9.0.0
       open: 11.0.0
       vscode-jsonrpc: 8.2.0
-      zod: 4.4.3
+      zod: 4.6.6
 
-  '@agentclientprotocol/sdk@1.1.0(zod@4.2.1)':
+  '@agentclientprotocol/sdk@1.1.0(zod@4.6.6)':
     dependencies:
-      zod: 4.2.1
+      zod: 4.6.6
 
-  '@agentclientprotocol/sdk@1.1.0(zod@4.4.3)':
-    dependencies:
-      zod: 4.4.3
-
-  '@ai-sdk/anthropic@4.0.12(zod@4.2.1)':
+  '@ai-sdk/anthropic@4.0.12(zod@4.6.6)':
     dependencies:
       '@ai-sdk/provider': 4.0.3
-      '@ai-sdk/provider-utils': 5.0.7(zod@4.2.1)
-      zod: 4.2.1
+      '@ai-sdk/provider-utils': 5.0.7(zod@4.6.6)
+      zod: 4.6.6
 
-  '@ai-sdk/gateway@4.0.16(zod@4.2.1)':
+  '@ai-sdk/gateway@4.0.16(zod@4.6.6)':
     dependencies:
       '@ai-sdk/provider': 4.0.3
-      '@ai-sdk/provider-utils': 5.0.7(zod@4.2.1)
+      '@ai-sdk/provider-utils': 5.0.7(zod@4.6.6)
       '@vercel/oidc': 3.2.0
-      zod: 4.2.1
+      zod: 4.6.6
 
-  '@ai-sdk/google@4.0.12(zod@4.2.1)':
+  '@ai-sdk/google@4.0.12(zod@4.6.6)':
     dependencies:
       '@ai-sdk/provider': 4.0.3
-      '@ai-sdk/provider-utils': 5.0.7(zod@4.2.1)
-      zod: 4.2.1
+      '@ai-sdk/provider-utils': 5.0.7(zod@4.6.6)
+      zod: 4.6.6
 
-  '@ai-sdk/openai-compatible@3.0.7(zod@4.2.1)':
+  '@ai-sdk/openai-compatible@3.0.7(zod@4.6.6)':
     dependencies:
       '@ai-sdk/provider': 4.0.3
-      '@ai-sdk/provider-utils': 5.0.7(zod@4.2.1)
-      zod: 4.2.1
+      '@ai-sdk/provider-utils': 5.0.7(zod@4.6.6)
+      zod: 4.6.6
 
-  '@ai-sdk/openai@4.0.11(zod@4.2.1)':
+  '@ai-sdk/openai@4.0.11(zod@4.6.6)':
     dependencies:
       '@ai-sdk/provider': 4.0.3
-      '@ai-sdk/provider-utils': 5.0.7(zod@4.2.1)
-      zod: 4.2.1
+      '@ai-sdk/provider-utils': 5.0.7(zod@4.6.6)
+      zod: 4.6.6
 
-  '@ai-sdk/provider-utils@5.0.7(zod@4.2.1)':
+  '@ai-sdk/provider-utils@5.0.7(zod@4.6.6)':
     dependencies:
       '@ai-sdk/provider': 4.0.3
       '@standard-schema/spec': 1.1.0
       '@workflow/serde': 4.1.0
       eventsource-parser: 3.1.0
-      zod: 4.2.1
+      zod: 4.6.6
 
   '@ai-sdk/provider@4.0.3':
     dependencies:
@@ -9349,11 +9343,11 @@ snapshots:
   '@anthropic-ai/claude-agent-sdk-win32-x64@0.3.198':
     optional: true
 
-  '@anthropic-ai/claude-agent-sdk@0.3.198(@anthropic-ai/sdk@0.100.1(zod@4.2.1))(@modelcontextprotocol/sdk@1.31.0(supports-color@8.1.1)(zod@4.2.1))(zod@4.4.3)':
+  '@anthropic-ai/claude-agent-sdk@0.3.198(@anthropic-ai/sdk@0.100.1(zod@4.6.6))(@modelcontextprotocol/sdk@1.31.0(supports-color@8.1.1)(zod@4.6.6))(zod@4.6.6)':
     dependencies:
-      '@anthropic-ai/sdk': 0.100.1(zod@4.2.1)
-      '@modelcontextprotocol/sdk': 1.31.0(supports-color@8.1.1)(zod@4.2.1)
-      zod: 4.4.3
+      '@anthropic-ai/sdk': 0.100.1(zod@4.6.6)
+      '@modelcontextprotocol/sdk': 1.31.0(supports-color@8.1.1)(zod@4.6.6)
+      zod: 4.6.6
     optionalDependencies:
       '@anthropic-ai/claude-agent-sdk-darwin-arm64': 0.3.198
       '@anthropic-ai/claude-agent-sdk-darwin-x64': 0.3.198
@@ -9364,12 +9358,12 @@ snapshots:
       '@anthropic-ai/claude-agent-sdk-win32-arm64': 0.3.198
       '@anthropic-ai/claude-agent-sdk-win32-x64': 0.3.198
 
-  '@anthropic-ai/sdk@0.100.1(zod@4.2.1)':
+  '@anthropic-ai/sdk@0.100.1(zod@4.6.6)':
     dependencies:
       json-schema-to-ts: 3.1.1
       standardwebhooks: 1.0.0
     optionalDependencies:
-      zod: 4.2.1
+      zod: 4.6.6
 
   '@asamuzakjp/css-color@5.1.11':
     dependencies:
@@ -10303,23 +10297,23 @@ snapshots:
 
   '@composio/client@0.1.0-alpha.56': {}
 
-  '@composio/core@0.6.2(ws@8.21.0)(zod@4.2.1)':
+  '@composio/core@0.6.2(ws@8.21.0)(zod@4.6.6)':
     dependencies:
       '@composio/client': 0.1.0-alpha.56
-      '@composio/json-schema-to-zod': 0.1.20(zod@4.2.1)
+      '@composio/json-schema-to-zod': 0.1.20(zod@4.6.6)
       '@types/json-schema': 7.0.15
       chalk: 4.1.2
-      openai: 6.17.0(ws@8.21.0)(zod@4.2.1)
+      openai: 6.17.0(ws@8.21.0)(zod@4.6.6)
       pusher-js: 8.4.0
       semver: 7.7.3
-      zod: 4.2.1
-      zod-to-json-schema: 3.25.1(zod@4.2.1)
+      zod: 4.6.6
+      zod-to-json-schema: 3.25.1(zod@4.6.6)
     transitivePeerDependencies:
       - ws
 
-  '@composio/json-schema-to-zod@0.1.20(zod@4.2.1)':
+  '@composio/json-schema-to-zod@0.1.20(zod@4.6.6)':
     dependencies:
-      zod: 4.2.1
+      zod: 4.6.6
 
   '@csstools/color-helpers@6.1.0': {}
 
@@ -10347,14 +10341,14 @@ snapshots:
 
   '@e965/xlsx@0.20.3': {}
 
-  '@eigenpal/docx-editor-agents@1.0.3(ai@7.0.22(zod@4.2.1))(react@19.2.3)':
+  '@eigenpal/docx-editor-agents@1.0.3(ai@7.0.22(zod@4.6.6))(react@19.2.3)':
     dependencies:
       docxtemplater: 3.68.7
       jszip: 3.10.1
       pizzip: 3.2.0
       xml-js: 1.6.11
     optionalDependencies:
-      ai: 7.0.22(zod@4.2.1)
+      ai: 7.0.22(zod@4.6.6)
       react: 19.2.3
 
   '@eigenpal/docx-editor-core@1.0.3(prosemirror-commands@1.7.1)(prosemirror-dropcursor@1.8.2)(prosemirror-history@1.5.0)(prosemirror-keymap@1.2.3)(prosemirror-model@1.25.12)(prosemirror-state@1.4.4)(prosemirror-tables@1.8.5)(prosemirror-transform@1.12.0)(prosemirror-view@1.42.3)':
@@ -10375,9 +10369,9 @@ snapshots:
 
   '@eigenpal/docx-editor-i18n@1.0.3': {}
 
-  '@eigenpal/docx-editor-react@1.0.3(@types/react-dom@19.2.3(@types/react@19.2.7))(@types/react@19.2.7)(ai@7.0.22(zod@4.2.1))(prosemirror-commands@1.7.1)(prosemirror-dropcursor@1.8.2)(prosemirror-history@1.5.0)(prosemirror-keymap@1.2.3)(prosemirror-model@1.25.12)(prosemirror-state@1.4.4)(prosemirror-tables@1.8.5)(prosemirror-transform@1.12.0)(prosemirror-view@1.42.3)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)':
+  '@eigenpal/docx-editor-react@1.0.3(@types/react-dom@19.2.3(@types/react@19.2.7))(@types/react@19.2.7)(ai@7.0.22(zod@4.6.6))(prosemirror-commands@1.7.1)(prosemirror-dropcursor@1.8.2)(prosemirror-history@1.5.0)(prosemirror-keymap@1.2.3)(prosemirror-model@1.25.12)(prosemirror-state@1.4.4)(prosemirror-tables@1.8.5)(prosemirror-transform@1.12.0)(prosemirror-view@1.42.3)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)':
     dependencies:
-      '@eigenpal/docx-editor-agents': 1.0.3(ai@7.0.22(zod@4.2.1))(react@19.2.3)
+      '@eigenpal/docx-editor-agents': 1.0.3(ai@7.0.22(zod@4.6.6))(react@19.2.3)
       '@eigenpal/docx-editor-core': 1.0.3(prosemirror-commands@1.7.1)(prosemirror-dropcursor@1.8.2)(prosemirror-history@1.5.0)(prosemirror-keymap@1.2.3)(prosemirror-model@1.25.12)(prosemirror-state@1.4.4)(prosemirror-tables@1.8.5)(prosemirror-transform@1.12.0)(prosemirror-view@1.42.3)
       '@eigenpal/docx-editor-i18n': 1.0.3
       '@radix-ui/react-select': 2.2.6(@types/react-dom@19.2.3(@types/react@19.2.7))(@types/react@19.2.7)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
@@ -11460,7 +11454,7 @@ snapshots:
 
   '@mixmark-io/domino@2.2.0': {}
 
-  '@modelcontextprotocol/sdk@1.31.0(supports-color@8.1.1)(zod@4.2.1)':
+  '@modelcontextprotocol/sdk@1.31.0(supports-color@8.1.1)(zod@4.6.6)':
     dependencies:
       '@hono/node-server': 2.1.5(hono@4.13.13)
       ajv: 8.17.1
@@ -11477,8 +11471,8 @@ snapshots:
       json-schema-typed: 8.0.2
       pkce-challenge: 5.0.1
       raw-body: 3.0.2
-      zod: 4.2.1
-      zod-to-json-schema: 3.25.1(zod@4.2.1)
+      zod: 4.6.6
+      zod-to-json-schema: 3.25.1(zod@4.6.6)
     transitivePeerDependencies:
       - supports-color
 
@@ -11687,10 +11681,10 @@ snapshots:
   '@openai/codex@0.142.5-win32-x64':
     optional: true
 
-  '@openrouter/ai-sdk-provider@3.0.0(ai@7.0.22(zod@4.2.1))(zod@4.2.1)':
+  '@openrouter/ai-sdk-provider@3.0.0(ai@7.0.22(zod@4.6.6))(zod@4.6.6)':
     dependencies:
-      ai: 7.0.22(zod@4.2.1)
-      zod: 4.2.1
+      ai: 7.0.22(zod@4.6.6)
+      zod: 4.6.6
 
   '@opentelemetry/api-logs@0.208.0':
     dependencies:
@@ -14150,7 +14144,7 @@ snapshots:
       node-emoji: 2.2.0
       turndown: 7.2.4
       turndown-plugin-gfm: 1.0.2
-      zod: 4.4.3
+      zod: 4.6.6
     transitivePeerDependencies:
       - debug
       - supports-color
@@ -14164,12 +14158,12 @@ snapshots:
       clean-stack: 2.2.0
       indent-string: 4.0.0
 
-  ai@7.0.22(zod@4.2.1):
+  ai@7.0.22(zod@4.6.6):
     dependencies:
-      '@ai-sdk/gateway': 4.0.16(zod@4.2.1)
+      '@ai-sdk/gateway': 4.0.16(zod@4.6.6)
       '@ai-sdk/provider': 4.0.3
-      '@ai-sdk/provider-utils': 5.0.7(zod@4.2.1)
-      zod: 4.2.1
+      '@ai-sdk/provider-utils': 5.0.7(zod@4.6.6)
+      zod: 4.6.6
 
   ajv-formats@2.1.1:
     dependencies:
@@ -15358,8 +15352,8 @@ snapshots:
       '@babel/parser': 7.28.5
       eslint: 9.39.2(jiti@2.6.1)(supports-color@8.1.1)
       hermes-parser: 0.25.1
-      zod: 4.2.1
-      zod-validation-error: 4.0.2(zod@4.2.1)
+      zod: 4.6.6
+      zod-validation-error: 4.0.2(zod@4.6.6)
     transitivePeerDependencies:
       - supports-color
 
@@ -17586,12 +17580,12 @@ snapshots:
 
   obug@2.1.1: {}
 
-  ollama-ai-provider-v2@4.0.1(ai@7.0.22(zod@4.2.1))(zod@4.2.1):
+  ollama-ai-provider-v2@4.0.1(ai@7.0.22(zod@4.6.6))(zod@4.6.6):
     dependencies:
       '@ai-sdk/provider': 4.0.3
-      '@ai-sdk/provider-utils': 5.0.7(zod@4.2.1)
-      ai: 7.0.22(zod@4.2.1)
-      zod: 4.2.1
+      '@ai-sdk/provider-utils': 5.0.7(zod@4.6.6)
+      ai: 7.0.22(zod@4.6.6)
+      zod: 4.6.6
 
   on-exit-leak-free@2.1.2: {}
 
@@ -17629,10 +17623,10 @@ snapshots:
       is-docker: 2.2.1
       is-wsl: 2.2.0
 
-  openai@6.17.0(ws@8.21.0)(zod@4.2.1):
+  openai@6.17.0(ws@8.21.0)(zod@4.6.6):
     optionalDependencies:
       ws: 8.21.0
-      zod: 4.2.1
+      zod: 4.6.6
 
   openid-client@6.8.1:
     dependencies:
@@ -19717,16 +19711,14 @@ snapshots:
 
   yoga-layout@3.2.1: {}
 
-  zod-to-json-schema@3.25.1(zod@4.2.1):
+  zod-to-json-schema@3.25.1(zod@4.6.6):
     dependencies:
-      zod: 4.2.1
+      zod: 4.6.6
 
-  zod-validation-error@4.0.2(zod@4.2.1):
+  zod-validation-error@4.0.2(zod@4.6.6):
     dependencies:
-      zod: 4.2.1
+      zod: 4.6.6
 
-  zod@4.2.1: {}
-
-  zod@4.4.3: {}
+  zod@4.6.6: {}
 
   zwitch@2.0.4: {}
